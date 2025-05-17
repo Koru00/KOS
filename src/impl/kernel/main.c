@@ -4,7 +4,7 @@
 #include "memset.h"
 #include "timer.h"
 #include "file.h"
-
+#include "debug.h"
 
 void kernel_main()
 {
@@ -22,9 +22,12 @@ void kernel_main()
     // Timer initialized
     pit_install();
     
+    serial_print("print in the serial log");
+
     while (1)
     {
         keyboard_callback();
+        move_cursor();
     }
     
 }

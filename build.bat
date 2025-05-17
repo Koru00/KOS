@@ -5,7 +5,7 @@ docker run --rm -it -v "%cd%":/root/env myos-buildenv bash -c "cd /root/env && m
 :: Check if build succeeded
 if exist dist\x86_64\kernel.iso (
     echo Build successful, running QEMU...
-    qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso
+    qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -serial file:.debug_log -monitor stdio
 ) else (
     echo Build failed or ISO not found.
 )

@@ -9,6 +9,8 @@
         "FPRINTF.C": "cpp",
         "PERROR.C": "cpp",
         "STRLEN.C": "cpp",
-        "isr.h": "c"
+        "isr.h": "c",
+        "heap_alloc.h": "c",
+        "ports.h": "c"
     }
 }

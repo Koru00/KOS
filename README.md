@@ -2,10 +2,10 @@
 # To do:
 - [x] Add only run command
 - [] Debug
-- [] Git repository
+- [x] Git repository
 - [] Clean the code
 - [] Making work the Programmable Interval Timer
-- [] Reorganize the header folder
+- [x] Reorganize the header folder
 
 
 

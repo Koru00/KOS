@@ -12,4 +12,4 @@
 void keyboard_init();
 
 // Keyboard interrupt handler callback
-void keyboard_callback();
+int keyboard_callback();
