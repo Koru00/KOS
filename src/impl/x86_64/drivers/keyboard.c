@@ -46,7 +46,36 @@ bool key_states[128] = {0};
 bool shift_held = 0; // globals
 int continius = 0;
 bool extended_code = 0;
-void keyboard_callback()
+
+int extended_key_callback(uint8_t key)
+{
+    // Handle extended keys (like arrow keys)
+    switch (key)
+    {
+    case 0x48:
+        return 1; // Up
+        break;
+    case 0x50:
+        return 2; // Down
+        break;
+    case 0x4B:
+        return 3; // Left
+        break;
+    case 0x4D:
+        return 4; // Right
+        break;
+    default:
+        // If not handled, ignore the scancode
+        break;
+    }
+
+    // Clear extended code AFTER handling
+    extended_code = 0;
+    port_byte_out(0x20, 0x20);
+}
+
+// to improve
+int keyboard_callback()
 {
     uint8_t scancode = port_byte_in(0x60);
     bool is_release = scancode & 0x80;
@@ -59,34 +88,6 @@ void keyboard_callback()
         return;
     }
 
-    if (extended_code)
-    {
-        // Handle extended keys (like arrow keys)
-        switch (key)
-        {
-        case 0x48:
-            print_str("[UP]");
-            break;
-        case 0x50:
-            print_str("[DOWN]");
-            break;
-        case 0x4B:
-            print_str("[LEFT]");
-            break;
-        case 0x4D:
-            print_str("[RIGHT]");
-            break;
-        default:
-            // If not handled, ignore the scancode
-            break;
-        }
-
-        // Clear extended code AFTER handling
-        extended_code = 0;
-        port_byte_out(0x20, 0x20);
-        return;
-    }
-
     if (key == 0x2A || key == 0x36) // Shift keys
     {
         shift_held = !is_release;
@@ -95,11 +96,15 @@ void keyboard_callback()
         return;
     }
 
-    if (!is_release && !key_states[key] && !extended_code)
+    if (!is_release && !key_states[key])
     {
         key_states[key] = 1;
 
-        if (key < 128 && scancode_to_char[key])
+        if (extended_code)
+        {
+            return extended_key_callback(key);
+        }
+        else if (key < 128 && scancode_to_char[key])
         {
             char c = shift_held ? scancode_to_char_shift[key] : scancode_to_char[key];
             if (c)
@@ -108,7 +113,7 @@ void keyboard_callback()
             }
         }
     }
-    else if (!is_release && key_states[key] && !extended_code)
+    else if (!is_release && key_states[key])
     {
 
         if (!continius)

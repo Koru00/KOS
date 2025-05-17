@@ -2,8 +2,8 @@
 
 :: Check if build succeeded
 if exist dist\x86_64\kernel.iso (
-    echo Running QEMU...
-    qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso
-) else (
-    echo Build failed or ISO not found.
+  echo Running QEMU...
+  qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -serial file:.debug_log -monitor stdio
+  ) else (
+  echo Build failed or ISO not found.
 )
