@@ -109,7 +109,7 @@ int keyboard_callback()
             char c = shift_held ? scancode_to_char_shift[key] : scancode_to_char[key];
             if (c)
             {
-                print_char(c);
+                printf(c);
             }
         }
     }

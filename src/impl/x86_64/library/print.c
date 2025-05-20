@@ -3,7 +3,45 @@
 #include "string.h"
 #include "heap_alloc.h"
 #include "cursor.h"
+#include "vga.h"
 
+const int tab_dimension = 3;
+
+void printf(char *str)
+{
+    for (size_t i = 0; 1; i++)
+    {
+        char character = (uint8_t)str[i];
+
+        switch (character)
+        {
+        case '\0':
+            return;
+            break;
+        case '\n':
+            vga_newline();
+            break;
+        case '\t':
+            print_tab();
+            break;
+        default:
+            vga_write(character);
+            break;
+        }
+    }
+}
+
+void print_tab()
+{
+    for (int i = 0; i < tab_dimension; i++)
+    {
+        vga_write(' ');
+    }
+}
+
+
+// DEPRECATED
+/*
 #define SCREEN_SIZE (NUM_ROWS * NUM_COLS)
 
 const static size_t NUM_COLS = 80;
@@ -14,8 +52,6 @@ struct Char
     uint8_t character;
     uint8_t color;
 };
-
-
 
 struct Char *buffer = (struct Char *)0xb8000;
 size_t col = 0;
@@ -52,7 +88,7 @@ void reload_screen()
     {
         for (size_t col = 0; col < NUM_COLS; col++)
         {
-            
+
             buffer[row * NUM_COLS + col] = (struct Char){
         character : buffer[row * NUM_COLS + col].character,
         color : color,
@@ -132,7 +168,10 @@ void print_backspace()
         character : ' ',
         color : color,
     };
-
+    if (row == 0 && col == 0)
+    {
+        return;
+    }
     if (col == 0)
     {
         row -= 1;
@@ -170,6 +209,8 @@ void print_char(char character)
     {
         print_newline();
     }
+    col = get_cursor_pos_col();
+    row = get_cursor_pos_row();
     buffer[col + NUM_COLS * row] = (struct Char){
         character : (uint8_t)character,
         color : color,
@@ -197,3 +238,27 @@ void print_set_color(uint8_t foreground, uint8_t background)
 {
     color = foreground + (background << 4);
 }
+
+void print_logo()
+{
+    print_newline();
+    print_set_color(PRINT_COLOR_LIGHT_GREEN, PRINT_COLOR_BLACK);
+    print_str(" __    __   ______    ______  ");
+    print_newline();
+    print_str("/  |  /  | /      \  /      \ ");
+    print_newline();
+    print_str("$$ | /$$/ /$$$$$$  |/$$$$$$  |");
+    print_newline();
+    print_str("$$ |/$$/  $$ |  $$ |$$ \__$$/ ");
+    print_newline();
+    print_str("$$  $$<   $$ |  $$ |$$      \ ");
+    print_newline();
+    print_str("$$$$$  \  $$ |  $$ | $$$$$$  |");
+    print_newline();
+    print_str("$$ |$$  \ $$ \__$$ |/  \__$$ |");
+    print_newline();
+    print_str("$$ | $$  |$$    $$/ $$    $$/ ");
+    print_newline();
+    print_str("$$/   $$/  $$$$$$/   $$$$$$/  ");
+}
+*/

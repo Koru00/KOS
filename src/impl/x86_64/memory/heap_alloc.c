@@ -19,6 +19,8 @@ void* malloc(size_t size)
     return ptr;
 }
 
+// free(ptr)
+
 void free_all()
 {
     heap_used = 0;
