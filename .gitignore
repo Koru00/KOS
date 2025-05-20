@@ -1,5 +1,5 @@
 .vscode
-debug_log
+.debug_log
 build
 dist
 *.bin
