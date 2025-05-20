@@ -1,9 +1,8 @@
-#ifndef ISR_H
-#define ISR_H
+#pragma once
 
 #include <stdint.h>
 
-typedef struct registers {
+typedef struct Registers {
     uint32_t ds;
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
     uint32_t int_no, err_code;
@@ -12,8 +11,5 @@ typedef struct registers {
 
 typedef void (*isr_t)(registers_t *);
 
-void isr_register_handler(int n, isr_t handler);
-
-void isr_install();
-
-#endif
+void isr_register_handler(int int_no, isr_t handler);
+void isr_handler(registers_t *regs);

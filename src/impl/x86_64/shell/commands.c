@@ -3,6 +3,8 @@
 #include "heap_alloc.h"
 #include "file.h"
 #include "timer.h"
+#include "power.h"
+#include "string.h"
 
 int tokenize(char *input, char **tokens, int max_tokens)
 {
@@ -68,7 +70,7 @@ uint8_t color_from_string(const char *str)
         return 15;
     return 15; // default white
 }
-
+/*
 void commands(char *text)
 {
     print_newline();
@@ -98,15 +100,35 @@ void commands(char *text)
     }
     else if (str_eq(tokens[0], "$w"))
     {
-        file_create('z');
+        file_create(tokens[1]);
     }
     else if (str_eq(tokens[0], "$ket"))
     {
         file_print();
     }
+    else if (str_eq(tokens[0], "$fc"))
+    {
+        file_save(tokens[1]);
+    }
+    else if (str_eq(tokens[0], "$ft"))
+    {
+        get_file_text();
+    }
     else if (str_eq(tokens[0], "$clear"))
     {
         print_clear();
+    }
+    else if (str_eq(tokens[0], "$logo"))
+    {
+        print_logo();
+    }
+    else if (str_eq(tokens[0], "$shutdown"))
+    {
+        set_running(OFF);
+    }
+    else if (str_eq(tokens[0], "$isRunning"))
+    {
+        print_str(int_to_str(get_running()));
     }
     else
     {
@@ -114,3 +136,4 @@ void commands(char *text)
         print_str(tokens[0]);
     }
 }
+    */

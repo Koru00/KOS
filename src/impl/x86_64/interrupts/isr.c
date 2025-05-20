@@ -1,12 +1,13 @@
-#include "isr.h" // contains registers_t definition and isr_register_handler declaration
+#include "isr.h"
 #include "ports.h"
 
 #define MAX_INTERRUPTS 256
 
-static isr_t interrupt_handlers[MAX_INTERRUPTS]; // typedef void (*isr_t)(registers_t *);
+typedef void (*isr_t)(registers_t *);
+static isr_t interrupt_handlers[MAX_INTERRUPTS];
 
-void isr_register_handler(int irq, isr_t handler) {
-    interrupt_handlers[irq] = handler;
+void isr_register_handler(int int_no, isr_t handler) {
+    interrupt_handlers[int_no] = handler;
 }
 
 // Called by assembly ISR stubs on interrupt
@@ -15,9 +16,8 @@ void isr_handler(registers_t *regs) {
         interrupt_handlers[regs->int_no](regs);
     }
 
-    // Send EOI to PIC if interrupt number >= 32 (hardware IRQs)
+    // Send EOI to PIC if it's a hardware interrupt (IRQ0 to IRQ15)
     if (regs->int_no >= 32 && regs->int_no < 48) {
-        // PIC EOI ports
         if (regs->int_no >= 40) {
             port_byte_out(0xA0, 0x20); // slave PIC
         }

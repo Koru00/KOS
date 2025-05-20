@@ -1,0 +1,6 @@
+.vscode
+debug_log
+build
+dist
+*.bin
+

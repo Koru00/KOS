@@ -2,12 +2,16 @@
 #include "idt.h"      // Include IDT header
 #include "keyboard.h" // Include keyboard header
 #include "memset.h"
-#include "timer.h"
+#include "pit.h"
 #include "file.h"
 #include "debug.h"
+#include "power.h"
+#include "string.h"
 
 void kernel_main()
 {
+    set_running(ON);
+
     asm volatile("cli");
 
     // initialize interrupt descriptor table
@@ -16,19 +20,13 @@ void kernel_main()
     // initialize position-independent code
     pic_initialize();
 
+  
+
     // initialize keyboard
     init_keyboard();
 
-    // Timer initialized
-    pit_install();
-    
-    serial_print("print in the serial log");
 
-    while (1)
+    while (get_running())
     {
-        keyboard_callback();
-        move_cursor();
     }
-    
 }
-
