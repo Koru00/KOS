@@ -3,17 +3,23 @@
 
 #define IDT_ENTRIES 256
 
-struct IDTEntry {
-    uint16_t offset_low;
-    uint16_t selector;
-    uint8_t zero;
-    uint8_t type_attr;
-    uint16_t offset_high;
+
+
+    struct IDTEntry {
+    uint16_t offset_low;     // bits 0–15
+    uint16_t selector;       // code segment selector in GDT
+    uint8_t  ist;            // bits 0–2 = IST index, rest = 0
+    uint8_t  type_attr;      // type and attributes
+    uint16_t offset_mid;     // bits 16–31
+    uint32_t offset_high;    // bits 32–63
+    uint32_t zero;           // reserved
 } __attribute__((packed));
 
-struct IDTPointer {
+
+
+    struct IDTPointer {
     uint16_t limit;
-    uint32_t base;
+    uint64_t base;
 } __attribute__((packed));
 
 extern void init_idt();

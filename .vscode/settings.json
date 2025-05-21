@@ -11,6 +11,8 @@
         "STRLEN.C": "cpp",
         "isr.h": "c",
         "heap_alloc.h": "c",
-        "ports.h": "c"
+        "ports.h": "c",
+        "print.h": "c",
+        "utility": "c"
     }
 }
