@@ -3,15 +3,10 @@ global keyboard_isr
 
 extern keyboard_callback
 
-[bits 32]
+[bits 64]
+global load_idt
 
 load_idt:
-    mov eax, [esp+4]
-    lidt [eax]
+    lidt [rdi]
     ret
 
-keyboard_isr:
-    pusha
-    call keyboard_callback
-    popa
-    iretd

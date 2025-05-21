@@ -1,7 +1,6 @@
 #include "print.h"
 #include "ports.h"
 #include "isr.h" // You need to implement IRQ handler registration
-#include "timer.h"
 #include "string.h"
 
 // Basic US QWERTY scancode map

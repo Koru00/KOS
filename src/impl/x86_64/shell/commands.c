@@ -2,7 +2,6 @@
 #include "print.h"
 #include "heap_alloc.h"
 #include "file.h"
-#include "timer.h"
 #include "power.h"
 #include "string.h"
 
