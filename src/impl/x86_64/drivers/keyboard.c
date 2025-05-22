@@ -3,6 +3,11 @@
 #include "isr.h" // You need to implement IRQ handler registration
 #include "string.h"
 
+
+
+
+
+
 // Basic US QWERTY scancode map
 char scancode_to_char[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', // 0x00 - 0x0F
