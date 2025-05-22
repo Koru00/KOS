@@ -80,37 +80,29 @@ void kernel_main()
     uint64_t user_data = kernel_data | (3 << 13);
     gdt_entries[4] = user_data;
 
-
-    serial_print("hello.");
     load_gdt();
-    serial_print("after99 ");
+
     // flush_gdt( );
     //    serial_print("after flush.");
     asm volatile("cli");
 
     init_idt();
-    serial_print("4");
 
     irq_remap();
-    
-    serial_print("5.");
 
     pic_initialize();
 
-    serial_print("6.");
     timer_phase(100);
-    serial_print("7.");
 
     timer_install();
-    serial_print("v.");
 
     asm volatile("sti");
 
-    serial_print("zzv.");
-
     // this is what you want
     while (1)
+    {
         asm("hlt");
+    }
 }
 
 void kernel_main_KORU()
