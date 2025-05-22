@@ -61,9 +61,6 @@ void irq_remap(void)
     port_byte_out(0xA1, 0x0);
 }
 
-
-
-
 /* We first remap the interrupt controllers, and then we install
  *  the appropriate ISRs to the correct entries in the IDT. This
  *  is just like installing the exception handlers */
@@ -100,10 +97,10 @@ void irq_install()
  *  an EOI command to the first controller. If you don't send
  *  an EOI, you won't raise any more IRQs */
 
- struct cpu_status_s* irq_handler(struct cpu_status_s *css)
- {
+struct cpu_status_s *irq_handler(struct cpu_status_s *css)
+{
 
-    //serial_print("t?");
+    // serial_print("t?");
 
     /* If the IDT entry that was invoked was greater than 40
      *  (meaning IRQ8 - 15), then we need to send an EOI to
@@ -113,12 +110,14 @@ void irq_install()
         port_byte_out(0xA0, 0x20);
     }
 
-    if (css->vector_number == 1) {
-        char keyscan[2];
+    if (css->vector_number == 1)
+    {
+        /*char keyscan[2];
         keyscan[1] = '\0';
         uint8_t scancode = port_byte_in(0x60);
         keyscan[0] = ' ' + scancode;
-        serial_print(keyscan);
+        serial_print(keyscan);*/
+        keyboard_callback();
     }
 
     /*
@@ -128,54 +127,44 @@ void irq_install()
         serial_print("0");
     }
         */
-        
 
-        /*
-    switch(css->vector_number){
+    /*
+switch(css->vector_number){
 
-        case 1:
-        break;
-        case 2:
-        break;
-        case 3:
-        break;
-        case 4:
-        break;
-        case 5:
-        break;
-        case 6:
-        break;
-        case 7:
-        b
-    }
-        */
-    char sslog[2];
-    sslog[0] =  css->vector_number + '0';
-    sslog[1] = '\0';
-    serial_print(sslog);
+    case 1:
+    break;
+    case 2:
+    break;
+    case 3:
+    break;
+    case 4:
+    break;
+    case 5:
+    break;
+    case 6:
+    break;
+    case 7:
+    b
+}
+    */
 
     /* In either case, we need to send an EOI to the master
      *  interrupt controller too */
     port_byte_out(0x20, 0x20);
 
     return css;
-
- }
+}
 
 void irq_handler__old(struct registers *r)
 {
     /* This is a blank function pointer */
     void (*handler)(struct registers *r);
 
-    serial_print("t?");
-
     /* Find out if we have a custom handler to run for this
      *  IRQ, and then finally, run it */
     handler = irq_routines[r->int_no - 32];
     if (handler)
     {
-            serial_print("Z");
-
         handler(r);
     }
 
