@@ -99,7 +99,62 @@ void irq_install()
  *  interrupt at BOTH controllers, otherwise, you only send
  *  an EOI command to the first controller. If you don't send
  *  an EOI, you won't raise any more IRQs */
-void irq_handler(struct registers *r)
+
+ struct cpu_status_s* irq_handler(struct cpu_status_s *css)
+ {
+
+    //serial_print("t?");
+
+    /* If the IDT entry that was invoked was greater than 40
+     *  (meaning IRQ8 - 15), then we need to send an EOI to
+     *  the slave controller */
+    if (css->vector_number >= 40)
+    {
+        port_byte_out(0xA0, 0x20);
+    }
+
+    /*
+    if (css->vector_number != 0) {
+        serial_print("nz");
+    } else {
+        serial_print("0");
+    }
+        */
+        
+
+        /*
+    switch(css->vector_number){
+
+        case 1:
+        break;
+        case 2:
+        break;
+        case 3:
+        break;
+        case 4:
+        break;
+        case 5:
+        break;
+        case 6:
+        break;
+        case 7:
+        b
+    }
+        */
+    char sslog[2];
+    sslog[0] =  css->vector_number + '0';
+    sslog[1] = '\0';
+    serial_print(sslog);
+
+    /* In either case, we need to send an EOI to the master
+     *  interrupt controller too */
+    port_byte_out(0x20, 0x20);
+
+    return css;
+
+ }
+
+void irq_handler__old(struct registers *r)
 {
     /* This is a blank function pointer */
     void (*handler)(struct registers *r);

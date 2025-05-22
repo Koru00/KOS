@@ -63,7 +63,7 @@ extern void irq14_stub();
 extern void irq15_stub();
 
 void init_idt() {
-    //memset(&idt, 0, sizeof(idt));
+    memset(&idt, 0, sizeof(idt));
 
 
     /*
@@ -75,7 +75,7 @@ void init_idt() {
         set_idt_gate(i, (uint64_t)irq_stubs[i - 32], 0x08, 0x8E);
 }
         */
-
+/*
     set_idt_gate(0, (uint64_t)irq0_stub, 0x08, 0x8E);
     set_idt_gate(1, (uint64_t)irq1_stub, 0x08, 0x8E);
     set_idt_gate(2, (uint64_t)irq2_stub, 0x08, 0x8E);
@@ -109,7 +109,7 @@ void init_idt() {
     set_idt_gate(29, (uint64_t)irq13_stub, 0x08, 0x8E);
     set_idt_gate(30, (uint64_t)irq14_stub, 0x08, 0x8E);
     set_idt_gate(31, (uint64_t)irq15_stub, 0x08, 0x8E);
-
+*/
     set_idt_gate(32, (uint64_t)irq0_stub, 0x08, 0x8E);
     set_idt_gate(33, (uint64_t)irq1_stub, 0x08, 0x8E);
     set_idt_gate(34, (uint64_t)irq2_stub, 0x08, 0x8E);

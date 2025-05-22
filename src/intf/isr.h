@@ -9,7 +9,7 @@ typedef struct registers {
     uint32_t eip, cs, eflags;
 } registers_t;
 
-struct cpu_status_t {
+struct cpu_status_s {
 
     uint64_t rax;
     uint64_t rbx;
