@@ -113,6 +113,14 @@ void irq_install()
         port_byte_out(0xA0, 0x20);
     }
 
+    if (css->vector_number == 1) {
+        char keyscan[2];
+        keyscan[1] = '\0';
+        uint8_t scancode = port_byte_in(0x60);
+        keyscan[0] = ' ' + scancode;
+        serial_print(keyscan);
+    }
+
     /*
     if (css->vector_number != 0) {
         serial_print("nz");
