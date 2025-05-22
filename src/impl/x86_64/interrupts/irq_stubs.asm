@@ -54,6 +54,7 @@ irq_common_stub:
     ; Set up first function argument for irq_handler (pointer to "registers_t")
     mov rdi, rsp
     call irq_handler
+    mov rsp, rax
 
     ; Remove pushed irq number and dummy error code
     add rsp, 16
