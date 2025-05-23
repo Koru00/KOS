@@ -10,6 +10,7 @@ extern irq_handler
 
 %macro IRQ_STUB 1
 irq%1_stub:
+    ;cli
     push 0          ; Dummy error code (not all IRQs have one)
     push %1         ; IRQ number
     jmp irq_common_stub
