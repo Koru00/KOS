@@ -4,6 +4,7 @@
 #include "heap_alloc.h"
 #include "cursor.h"
 #include "vga.h"
+#include "debug.h"
 
 const int tab_dimension = 3;
 
@@ -11,6 +12,7 @@ void printf(char *str)
 {
     for (size_t i = 0; 1; i++)
     {
+
         char character = (uint8_t)str[i];
 
         switch (character)
@@ -24,6 +26,18 @@ void printf(char *str)
         case '\t':
             print_tab();
             break;
+        /*case '%':
+            char type = (uint8_t)str[++i];
+            switch (type)
+            {
+                case '%':
+                    vga_write('%');
+                    break;
+                case 'c':
+
+                    break;
+            }
+            break;*/
         default:
             vga_write(character);
             break;
@@ -39,6 +53,16 @@ void print_tab()
     }
 }
 
+void scanf()
+{
+    char *scan;
+    for (int i = 0; i < 25; i++)
+    {
+        scan[i] = vga_read(i, 0);
+    }
+    printf("\n");
+    printf(scan);
+}
 
 // DEPRECATED
 /*

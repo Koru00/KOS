@@ -26,5 +26,5 @@ enum
 void vga_clear();
 void vga_color(uint8_t foreground, uint8_t background);
 void vga_write(char character);
-void vga_read();
+char vga_read(int col, int row);
 void vga_newline();
