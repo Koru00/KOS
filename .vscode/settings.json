@@ -13,6 +13,13 @@
         "heap_alloc.h": "c",
         "ports.h": "c",
         "print.h": "c",
-        "utility": "c"
+        "utility": "c",
+        "stdarg.h": "c",
+        "compare": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "xmemory": "c",
+        "xtr1common": "c",
+        "xutility": "c"
     }
 }

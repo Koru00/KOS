@@ -138,4 +138,4 @@ typedef enum keycode
 void keyboard_init();
 
 // Keyboard interrupt handler callback
-int keyboard_callback();
+void keyboard_callback();

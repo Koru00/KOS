@@ -8,6 +8,7 @@
 #include "power.h"
 #include "string.h"
 #include "irq.h"
+#include "vga.h"
 
 // #define PIT_ABLE 1
 
@@ -47,6 +48,9 @@ void flush_gdt()
 }
 
 extern void irq_remap(void);
+
+
+#define GREETING "HELLO FROM KOS"
 
 void kernel_main()
 {
@@ -95,8 +99,38 @@ void kernel_main()
     timer_phase(100);
 
     timer_install();
+    
+    serial_print("tettt");
+
+    printf(GREETING);
+
 
     asm volatile("sti");
+
+    //printf("ciao mondo");
+/*
+    char greet[] = "ciao mondo"
+
+    vga_write('c');
+    vga_write('i');
+    vga_write('a');
+    vga_write('o');
+    vga_newline();
+    */
+
+    //printf(GREETING);
+
+    serial_print("tettt");
+
+    /*
+    char c[] = GREETING;
+
+    for (int i = 0 ; i < sizeof(GREETING); ++i) {
+        serial_print("a");
+        vga_write(c[i]);
+    }
+    vga_newline();
+    */
 
     // this is what you want
     while (1)

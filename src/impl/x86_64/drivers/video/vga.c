@@ -62,8 +62,9 @@ void vga_color(uint8_t foreground, uint8_t background)
     color = foreground + (background << 4);
 }
 
-void vga_read()
+char vga_read(int col, int row)
 {
+    return buffer[col + NUM_COLS*row].character;
 }
 
 void vga_newline()
