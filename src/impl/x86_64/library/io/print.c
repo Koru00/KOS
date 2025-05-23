@@ -10,6 +10,12 @@ const int tab_dimension = 3;
 
 void printf(char *str)
 {
+
+    //asm volatile("cli");
+
+     //char sp[2];
+    //sp[1] = '\0';
+
     for (size_t i = 0; 1; i++)
     {
 
@@ -18,8 +24,8 @@ void printf(char *str)
         switch (character)
         {
         case '\0':
-            return;
-            break;
+    goto end;
+                break;
         case '\n':
             vga_newline();
             break;
@@ -39,10 +45,16 @@ void printf(char *str)
             }
             break;*/
         default:
+            //sp[0] = character;
+            //serial_print(sp);        
             vga_write(character);
             break;
         }
     }
+
+end:
+        //asm volatile("sti");
+
 }
 
 void print_tab()

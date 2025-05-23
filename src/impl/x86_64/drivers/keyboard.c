@@ -280,6 +280,7 @@ void keyboard_callback()
     }
     else
     {
+        //printf("_su_");
         switch (key)
         {
         case KEY_LEFT_SHIFT:
