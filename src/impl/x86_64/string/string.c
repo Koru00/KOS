@@ -38,3 +38,17 @@ char* int_to_str(int value) {
 
     return buffer;
 }
+
+char* hex_to_str(unsigned int value, char* buffer)
+{
+    const char* hex = "0123456789abcdef";
+    char temp[32];
+    int i = 0;
+    do {
+        temp[i++] = hex[value % 16];
+        value /= 16;
+    } while (value);
+    for (int j = 0; j < i; j++)
+        buffer[j] = temp[i - j - 1];
+    buffer[i] = '\0';
+}

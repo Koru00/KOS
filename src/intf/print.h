@@ -3,5 +3,5 @@
 #include <stdint.h>
 #include <stddef.h>
 
-void printf(char* str);
+void printf(const char* str, ...);
 void scanf();
