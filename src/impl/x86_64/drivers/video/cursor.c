@@ -24,7 +24,7 @@ void update_cursor(int row, int col)
     port_byte_out(0x3D4, 0x0E);
     port_byte_out(0x3D5, (uint8_t)((position >> 8) & 0xFF));
 }
-
+/*
 void move_cursor()
 {
     if (move_cursor)
@@ -48,7 +48,7 @@ void move_cursor()
         }
     }
 }
-
+*/
 int get_cursor_pos_col()
 {
     return pos_col;

@@ -100,13 +100,7 @@ void kernel_main()
     asm volatile("sti");
 
     vga_clear();
-    printf("ciao!");
-    char* c;
-    scanf(&c);
-    if (str_eq(c, "ciao!"))
-    {
-        printf("it is equal");
-    }
+    printf("this char is:\t%x", 0xa);
     
     // this is what you want
     while (1)

@@ -5,16 +5,15 @@
 #include "cursor.h"
 #include "vga.h"
 #include "debug.h"
+#include "stdarg.h"
 
 const int tab_dimension = 3;
 
-void printf(char *str)
+void printf(const char *str, ...)
 {
 
-    // asm volatile("cli");
-
-    // char sp[2];
-    // sp[1] = '\0';
+    va_list args;
+    va_start(args, str);
 
     for (size_t i = 0; 1; i++)
     {
@@ -32,7 +31,7 @@ void printf(char *str)
         case '\t':
             print_tab();
             break;
-        /*case '%':
+        case '%':
             char type = (uint8_t)str[++i];
             switch (type)
             {
@@ -40,13 +39,24 @@ void printf(char *str)
                     vga_write('%');
                     break;
                 case 'c':
-
+			char c = (char)(va_arg(args, int));
+			vga_write(c);
                     break;
+		case 's':
+			char* s = va_arg(args, char*);
+			printf(s);
+			break;
+		case 'd':
+			int d = va_arg(args, int);
+			printf(int_to_str(d));
+			break;
+		case 'x':
+			unsigned int num = va_arg(args, unsigned int);
+			printf(hex_to_str(num));
+
             }
-            break;*/
-        default:
-            // sp[0] = character;
-            // serial_print(sp);
+            break;
+        default:	   
             vga_write(character);
             break;
         }
@@ -54,6 +64,7 @@ void printf(char *str)
 
 end:
     // asm volatile("sti");
+    va_end(args);
 }
 
 void print_tab()
