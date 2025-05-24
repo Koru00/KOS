@@ -82,61 +82,61 @@ static keycode_t scancode_map[128] = {
     [0x58] = KEY_F12,
 };
 
-static char key_map[128] = {
-    [0x1E] = 'a',
-    [0x30] = 'b',
-    [0x2E] = 'c',
-    [0x20] = 'd',
-    [0x12] = 'e',
-    [0x21] = 'f',
-    [0x22] = 'g',
-    [0x23] = 'h',
-    [0x17] = 'i',
-    [0x24] = 'j',
-    [0x25] = 'k',
-    [0x26] = 'l',
-    [0x32] = 'm',
-    [0x31] = 'n',
-    [0x18] = 'o',
-    [0x19] = 'p',
-    [0x10] = 'q',
-    [0x13] = 'r',
-    [0x1F] = 's',
-    [0x14] = 't',
-    [0x16] = 'u',
-    [0x2F] = 'v',
-    [0x11] = 'w',
-    [0x2D] = 'x',
-    [0x15] = 'y',
-    [0x2C] = 'z',
+static char* key_map[128] = {
+    [0x1E] = "a",
+    [0x30] = "b",
+    [0x2E] = "c",
+    [0x20] = "d",
+    [0x12] = "e",
+    [0x21] = "f",
+    [0x22] = "g",
+    [0x23] = "h",
+    [0x17] = "i",
+    [0x24] = "j",
+    [0x25] = "k",
+    [0x26] = "l",
+    [0x32] = "m",
+    [0x31] = "n",
+    [0x18] = "o",
+    [0x19] = "p",
+    [0x10] = "q",
+    [0x13] = "r",
+    [0x1F] = "s",
+    [0x14] = "t",
+    [0x16] = "u",
+    [0x2F] = "v",
+    [0x11] = "w",
+    [0x2D] = "x",
+    [0x15] = "y",
+    [0x2C] = "z",
 
-    [0x02] = '1',
-    [0x03] = '2',
-    [0x04] = '3',
-    [0x05] = '4',
-    [0x06] = '5',
-    [0x07] = '6',
-    [0x08] = '7',
-    [0x09] = '8',
-    [0x0A] = '9',
-    [0x0B] = '0',
+    [0x02] = "1",
+    [0x03] = "2",
+    [0x04] = "3",
+    [0x05] = "4",
+    [0x06] = "5",
+    [0x07] = "6",
+    [0x08] = "7",
+    [0x09] = "8",
+    [0x0A] = "9",
+    [0x0B] = "0",
 
-    [0x1C] = '\n',
+    [0x1C] = "\n",
     [0x01] = KEY_ESC,
     [0x0E] = KEY_BACKSPACE,
-    [0x0F] = '\t',
-    [0x39] = ' ',
-    [0x0C] = '-',
-    [0x0D] = '=',
-    [0x1A] = '<',
-    [0x1B] = '>',
-    [0x2B] = '\\',
-    [0x27] = ';',
-    [0x28] = '\'',
+    [0x0F] = "\t",
+    [0x39] = " ",
+    [0x0C] = "-",
+    [0x0D] = "=",
+    [0x1A] = "<",
+    [0x1B] = ">",
+    [0x2B] = "\\",
+    [0x27] = ";",
+    [0x28] = "\'",
     [0x29] = KEY_GRAVE,
-    [0x33] = ',',
+    [0x33] = ",",
     [0x34] = KEY_PERIOD,
-    [0x35] = '/',
+    [0x35] = "/",
 
     [0x3A] = KEY_CAPS_LOCK,
     [0x2A] = KEY_LEFT_SHIFT,
@@ -158,7 +158,7 @@ static char key_map[128] = {
     [0x58] = KEY_F12,
 };
 
-static char key_map_caps[128] = {
+static char* key_map_caps[128] = {
     [0x1E] = 'A',
     [0x30] = 'B',
     [0x2E] = 'C',
@@ -243,7 +243,7 @@ void keyboard_callback()
     int is_release = scancode & 0x80;
 
     keycode_t key = scancode_map[scancode];
-    keycode_t key_released = scancode_map[scancode & 0x80];
+    keycode_t key_released = scancode_map[scancode & 0x7F];
 
     if (!is_release)
     {
@@ -264,181 +264,33 @@ void keyboard_callback()
             }
             break;
         case KEY_LEFT_SHIFT:
-            caps = 1;
-            serial_print("shifted");
-            return;
+            if (!caps)
+            {
+                caps = 1;
+                return;
+            }
             break;
         }
         if (write && !caps)
         {
-            vga_write(key_map[scancode]);
+            printf(key_map[scancode]);
         }
         else if (write && caps)
         {
-            vga_write(key_map_caps[scancode]);
+            printf(key_map_caps[scancode]);
         }
     }
     else
     {
-        //printf("_su_");
-        switch (key)
+        switch (key_released)
         {
         case KEY_LEFT_SHIFT:
-            caps = 0;
-            serial_print("realesed");
-            return;
+            if (caps)
+            {
+                caps = 0;
+                return;
+            }
             break;
-        case KEY_A:
-            serial_print("realesed a");
-            break;
         }
     }
-}
-
-// Basic US QWERTY scancode map
-char scancode_to_char[128] = {
-    0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', // 0x00 - 0x0F
-    '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',  // 0x10 - 0x1D
-    0,                                                                       // Control
-    'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',             // 0x1E - 0x29
-    0,                                                                       // Left Shift
-    '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',                  // 0x2A - 0x35
-    0, '*', 0, ' ',                                                          // 0x36 - 0x39 (Right Shift, KP *, Alt, Space)
-    0,                                                                       // Caps Lock
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                                            // F1–F10                                  // 0x3A - 0x43
-    0,                                                                       // Num Lock
-    0,                                                                       // Scroll Lock
-    '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.',         // Numpad keys 0x47 - 0x53
-    0, 0, 0,                                                                 // Unused
-    0, 0, 0, 0, 0, 0, 0,                                                     // F11–F12 and beyond (usually extended)
-    0, 0, 0, 0, 0, 0, 0, 0                                                   // Fill rest as 0
-};
-
-char scancode_to_char_shift[128] = {
-    0, 27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', // 0x00 - 0x0F
-    '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',  // 0x10 - 0x1D
-    0,                                                                       // Control
-    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~',             // 0x1E - 0x29
-    0,                                                                       // Left Shift
-    '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',                   // 0x2A - 0x35
-    0, '*', 0, ' ',                                                          // 0x36 - 0x39
-    0,                                                                       // Caps Lock
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,                                            // F1–F10
-    0,                                                                       // Num Lock
-    0,                                                                       // Scroll Lock
-    '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.',         // Numpad (same as no shift)
-    0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0};
-
-typedef int bool;
-
-bool key_states[128] = {0};
-bool shift_held = 0; // globals
-int continius = 0;
-bool extended_code = 0;
-
-int extended_key_callback(uint8_t key)
-{
-    // Handle extended keys (like arrow keys)
-    switch (key)
-    {
-    case 0x48:
-        return 1; // Up
-        break;
-    case 0x50:
-        return 2; // Down
-        break;
-    case 0x4B:
-        return 3; // Left
-        break;
-    case 0x4D:
-        return 4; // Right
-        break;
-    default:
-        // If not handled, ignore the scancode
-        break;
-    }
-
-    // Clear extended code AFTER handling
-    extended_code = 0;
-    port_byte_out(0x20, 0x20);
-}
-
-// to improve
-int keyboard_callback_old()
-{
-    uint8_t scancode = port_byte_in(0x60);
-    bool is_release = scancode & 0x80;
-    uint8_t key = scancode;
-
-    if (scancode == 0xE0)
-    {
-        extended_code = 1;
-        port_byte_out(0x20, 0x20);
-        return;
-    }
-
-    if (!is_release && !key_states[key])
-    {
-        key_states[key] = 1;
-
-        if (scancode_map[scancode] == KEY_A)
-        {
-            serial_print("it work");
-        }
-        /*
-        if (extended_code)
-        {
-            return extended_key_callback(key);
-        }
-        else if (key < 128 && scancode_to_char[key])
-        {
-            char c = shift_held ? scancode_to_char_shift[key] : scancode_to_char[key];
-            if (c)
-            {
-                printf(c);
-            }
-        }*/
-    }
-    else if (!is_release && key_states[key])
-    {
-
-        if (!continius)
-        {
-            for (volatile int i = 0; i < 20000000; i++)
-            {
-                if (is_release)
-                {
-                    break;
-                    continius = 0;
-                }
-            }
-            continius = 1;
-        }
-        if (continius)
-        {
-            for (volatile int i = 0; i < 8000000; i++)
-            {
-                if (is_release)
-                {
-                    break;
-                    continius = 0;
-                }
-            }
-        }
-        key_states[key] = 0;
-    }
-    if (is_release)
-    {
-        key_states[key] = 0;
-        continius = 0;
-    }
-
-    port_byte_out(0x20, 0x20);
-}
-
-void init_keyboard()
-{
-    isr_register_handler(33, keyboard_callback); // IRQ1 is interrupt 33
 }

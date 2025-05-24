@@ -9,6 +9,7 @@
 #include "string.h"
 #include "irq.h"
 #include "vga.h"
+#include "strcmp.h"
 
 // #define PIT_ABLE 1
 
@@ -49,12 +50,6 @@ void flush_gdt()
 
 extern void irq_remap(void);
 
-
-#define GREETING "HELLO FROM KOS"
-//#define GREET_IT "CIAO MONDO"
-#define GREET_IT "C"
-#define GREET_IT_SZ (sizeof(GREET_IT) - 1)
-
 void kernel_main()
 {
 
@@ -90,7 +85,6 @@ void kernel_main()
     load_gdt();
 
     // flush_gdt( );
-    //    serial_print("after flush.");
     asm volatile("cli");
 
     init_idt();
@@ -102,82 +96,18 @@ void kernel_main()
     timer_phase(100);
 
     timer_install();
-    
-    serial_print("tettt");
-
-    //printf(GREETING);
-
 
     asm volatile("sti");
 
-    //printf(GREETING);
-
-
-    //printf("ciao mondo");
-
-    char greet[] = "TUTTO MAIUSCOLO CIAO";
-
-    //vga_write('c');
-    //vga_write('i');
-    //vga_write('a');
-    ///vga_write('o');
-    //vga_newline();
-    
-
-    //printf(GREETING);
-    //printf(greet);
-
-    //serial_print("tettt");
-
-    #if 0
-    char c[] = GREETING;
-
-    char sp[2];
-    sp[1] = '\0';
-    for (int i = 0 ; i < sizeof(GREETING); ++i) {
-        sp[0] = c[i];
-        serial_print(sp);
-        vga_write(c[i]);
-    }
-    vga_newline();
-    #else
-/*
-    char c[] = GREET_IT;
-
-    char sp[2];
-    sp[1] = '\0';
-    for (int i = 0 ; i < GREET_IT_SZ; ++i) {
-        sp[0] = c[i];
-        serial_print(sp);
-        vga_write(c[i]);
-    }
-*/
-    vga_newline();
-
-    #endif
-
     vga_clear();
-    
-    //printf("THIS IS A NEW BUILD anche minuscolo");
-    printf("anche minuscolo");
-    
-    char array[100];
-    //strcpy(array, GREET_IT);
-    for (int i = 0 ; i < 10 ; ++i) {
-        array[i] = 'a' + i;
+    printf("ciao!");
+    char* c;
+    scanf(&c);
+    if (str_eq(c, "ciao!"))
+    {
+        printf("it is equal");
     }
-    array[10] = '\0';
-    printf(array);
-
-    printf("funziona anche dopo");
-
-    //questa in minuscolo non funziona.
-    //printf("this is a new build");
-
-    char a1[] = "aaaa anche cosi funziona";
-    printf(a1);
     
-
     // this is what you want
     while (1)
     {

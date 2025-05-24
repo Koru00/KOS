@@ -11,10 +11,10 @@ const int tab_dimension = 3;
 void printf(char *str)
 {
 
-    //asm volatile("cli");
+    // asm volatile("cli");
 
-     //char sp[2];
-    //sp[1] = '\0';
+    // char sp[2];
+    // sp[1] = '\0';
 
     for (size_t i = 0; 1; i++)
     {
@@ -24,8 +24,8 @@ void printf(char *str)
         switch (character)
         {
         case '\0':
-    goto end;
-                break;
+            goto end;
+            break;
         case '\n':
             vga_newline();
             break;
@@ -45,16 +45,15 @@ void printf(char *str)
             }
             break;*/
         default:
-            //sp[0] = character;
-            //serial_print(sp);        
+            // sp[0] = character;
+            // serial_print(sp);
             vga_write(character);
             break;
         }
     }
 
 end:
-        //asm volatile("sti");
-
+    // asm volatile("sti");
 }
 
 void print_tab()
@@ -65,15 +64,16 @@ void print_tab()
     }
 }
 
-void scanf()
+void scanf(char* output)
 {
-    char *scan;
-    for (int i = 0; i < 25; i++)
+    char scan[25];
+    int length = vga_line_l();
+    for (int i = 0; i < length; i++)
     {
         scan[i] = vga_read(i, 0);
     }
-    printf("\n");
-    printf(scan);
+    output = malloc(scan);
+    return output;
 }
 
 // DEPRECATED

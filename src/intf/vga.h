@@ -28,3 +28,4 @@ void vga_color(uint8_t foreground, uint8_t background);
 void vga_write(char character);
 char vga_read(int col, int row);
 void vga_newline();
+int vga_line_l();
