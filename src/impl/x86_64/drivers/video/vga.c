@@ -64,7 +64,7 @@ void vga_color(uint8_t foreground, uint8_t background)
 
 char vga_read(int col, int row)
 {
-    return buffer[col + NUM_COLS*row].character;
+    return buffer[col + NUM_COLS * row].character;
 }
 
 void vga_newline()
@@ -84,4 +84,18 @@ void vga_newline()
         }
     }
     clear_row(NUM_COLS - 1);
+}
+
+int vga_line_l()
+{
+    int last_char_col;
+    for (int col = NUM_COLS; col >= 0; col--)
+    {
+        char c = buffer[row * NUM_COLS + col].character;
+        if (c != ' ')
+        {
+            return col + 1;
+        }
+    }
+    return 0;
 }
