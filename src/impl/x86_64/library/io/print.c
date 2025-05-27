@@ -11,14 +11,26 @@ const int tab_dimension = 3;
 
 void printf(const char *str, ...)
 {
+	serial_print("print 1");
 
     va_list args;
     va_start(args, str);
 
+	serial_print("print 2");
+
     for (size_t i = 0; 1; i++)
     {
 
+
         char character = (uint8_t)str[i];
+
+	char sp[3];
+
+	sp[0] = character;
+	sp[1] = '\n';
+	sp[2] = '\0';
+
+	serial_print(sp);
 
         switch (character)
         {

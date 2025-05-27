@@ -1,4 +1,5 @@
 #include "vga.h"
+#include "debug.h"
 
 // Screen area
 #define SCREEN_SIZE (NUM_ROWS * NUM_COLS)
@@ -55,6 +56,17 @@ void vga_write(char character)
         color : color,
     };
     col++;
+}
+
+void vga_set_pos(int _col, int _row)
+{
+	if (_col > NUM_COLS || _col < 0 || _row > NUM_ROWS || _row < 0)
+	{
+		log_message(__PRETTY_FUNCTION__, "col or row out of bouds");
+		return;
+	}
+	col = _col;
+	row = _row;
 }
 
 void vga_color(uint8_t foreground, uint8_t background)
