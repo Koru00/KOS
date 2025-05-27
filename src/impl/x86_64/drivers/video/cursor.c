@@ -2,12 +2,15 @@
 #include "ports.h"
 #include "keyboard.h"
 #include "print.h"
+#include "cursor.h"
 
 int pos_row = 0;
 int pos_col = 0;
 
 // It say if the cursor can move
-int cursor_move;
+int cursor_move = 1;
+
+
 
 void update_cursor(int row, int col)
 {
@@ -16,39 +19,36 @@ void update_cursor(int row, int col)
     pos_col = col;
     pos_row = row;
 
-    // Invia offset basso
     port_byte_out(0x3D4, 0x0F);
     port_byte_out(0x3D5, (uint8_t)(position & 0xFF));
 
-    // Invia offset alto
     port_byte_out(0x3D4, 0x0E);
     port_byte_out(0x3D5, (uint8_t)((position >> 8) & 0xFF));
 }
-/*
-void move_cursor()
+void move_cursor(Dir dir)
 {
-    if (move_cursor)
+    if (cursor_move)
     {
-        switch (keyboard_callback())
+        switch (dir)
         {
-        case 1:
+        case 0:
             update_cursor(pos_row - 1, pos_col);
             break;
-        case 2:
+        case 1:
             update_cursor(pos_row + 1, pos_col);
             break;
-        case 3:
+        case 2:
             update_cursor(pos_row, pos_col - 1);
             break;
-        case 4:
+        case 3:
             update_cursor(pos_row, pos_col + 1);
             break;
         default:
             break;
-        }
+       }
     }
 }
-*/
+
 int get_cursor_pos_col()
 {
     return pos_col;

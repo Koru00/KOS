@@ -9,7 +9,7 @@
 #include "string.h"
 #include "irq.h"
 #include "vga.h"
-#include "strcmp.h"
+#include "cursor.h"
 
 // #define PIT_ABLE 1
 
@@ -49,6 +49,10 @@ void flush_gdt()
 }
 
 extern void irq_remap(void);
+
+char extstr[100];
+
+#define GREETING "hello"
 
 void kernel_main()
 {
@@ -98,50 +102,30 @@ void kernel_main()
     timer_install();
 
     asm volatile("sti");
-
+	
     vga_clear();
-    printf("this char is:\t%x", 0xa);
-    
-    // this is what you want
+
+    //vga_set_pos(1, 30);
+	
+//char str[20];
+//str[0] = 'H';
+//str[1] = 'I';
+//str[2] = '\0';
+//strcat(str, " world");
+     serial_print("test!");
+    serial_print("print 24");
+
+//char* str = "hi";
+	serial_print("print 666");
+	extstr[0] = 'a';
+	extstr[1] = '\0';
+	//strcat(extstr, "w");
+//int len = strlen(extstr);
+serial_print("aaaaa");	
+
     while (1)
     {
         asm("hlt");
     }
 }
 
-void kernel_main_KORU()
-{
-    serial_print("1.");
-    set_running(ON);
-    serial_print("2.");
-
-    asm volatile("cli");
-    serial_print("3.");
-
-    // initialize interrupt descriptor table
-    init_idt();
-    serial_print("4.");
-
-    // initialize position-independent code
-    pic_initialize();
-    serial_print("5.");
-
-    // irq_install();
-    serial_print("6.");
-    timer_phase(100);
-    serial_print("7.");
-
-    timer_install();
-    serial_print("v.");
-
-    asm volatile("sti");
-
-    serial_print("9.");
-
-    // initialize keyboard
-    // init_keyboard();
-
-    while (get_running())
-    {
-    }
-}
