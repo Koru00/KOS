@@ -18,6 +18,7 @@ if [ -f dist/x86_64/kernel.iso ]; then
     qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso \
         -serial file:debug_log/.debug_log.txt \
         -monitor stdio
+    clear
 else
     echo "[ERROR] Build finished but ISO not found."
     exit 1
