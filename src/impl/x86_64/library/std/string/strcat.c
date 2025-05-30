@@ -1,6 +1,6 @@
 #include "library/str/strlen.h"
 
-void strcat(char* dest, const char* str)
+void kstrcat(char* dest, const char* str)
 {
 	int len;
 	len = strlen(dest);

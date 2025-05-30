@@ -1,6 +1,6 @@
 #include "print.h"
 #include "ports.h"
-#include "isr.h" // You need to implement IRQ handler registration
+#include "isr.h"
 #include "string.h"
 #include "debug.h"
 #include "keyboard.h"
@@ -95,7 +95,6 @@ static keycode_t scancode_map[128] = {
     [0x57] = KEY_F11,
     [0x58] = KEY_F12,
 };
-
 keycode_t extended_scancode_map[128] = {
     [0x1C] = KEY_NUMPAD_ENTER,
     [0x1D] = KEY_RIGHT_CTRL,
@@ -116,157 +115,23 @@ keycode_t extended_scancode_map[128] = {
     [0x5D] = KEY_MENU,
 };
 
-static char* key_map[128] = {
-    [0x1E] = "a",
-    [0x30] = "b",
-    [0x2E] = "c",
-    [0x20] = "d",
-    [0x12] = "e",
-    [0x21] = "f",
-    [0x22] = "g",
-    [0x23] = "h",
-    [0x17] = "i",
-    [0x24] = "j",
-    [0x25] = "k",
-    [0x26] = "l",
-    [0x32] = "m",
-    [0x31] = "n",
-    [0x18] = "o",
-    [0x19] = "p",
-    [0x10] = "q",
-    [0x13] = "r",
-    [0x1F] = "s",
-    [0x14] = "t",
-    [0x16] = "u",
-    [0x2F] = "v",
-    [0x11] = "w",
-    [0x2D] = "x",
-    [0x15] = "y",
-    [0x2C] = "z",
+// we have here the last 10 keys pressed
+#define NUM_HIST_KEYS 10
+static keycode_t last_keys[NUM_HIST_KEYS];
+// we have only one listener for now
+static key_pressed_fn _listener = NULL;
 
-    [0x02] = "1",
-    [0x03] = "2",
-    [0x04] = "3",
-    [0x05] = "4",
-    [0x06] = "5",
-    [0x07] = "6",
-    [0x08] = "7",
-    [0x09] = "8",
-    [0x0A] = "9",
-    [0x0B] = "0",
+int add_keyboard_listener(key_pressed_fn a_listener)
+{
+    if (_listener != NULL) {
+        log_message(__PRETTY_FUNCTION__, "There is already one listener");
+        return -1;
+    }
 
-    [0x1C] = "\n",
-    [0x01] = KEY_ESC,
-    [0x0E] = KEY_BACKSPACE,
-    [0x0F] = "\t",
-    [0x39] = " ",
-    [0x0C] = "-",
-    [0x0D] = "=",
-    [0x1A] = "<",
-    [0x1B] = ">",
-    [0x2B] = "\\",
-    [0x27] = ";",
-    [0x28] = "\'",
-    [0x29] = "`",
-    [0x33] = ",",
-    [0x34] = ".",
-    [0x35] = "/",
+    _listener = a_listener;
+    return 0;
+}
 
-    [0x3A] = KEY_CAPS_LOCK,
-    [0x2A] = KEY_LEFT_SHIFT,
-    [0x36] = KEY_RIGHT_SHIFT,
-    [0x1D] = KEY_LEFT_CTRL,
-    [0x38] = KEY_LEFT_ALT,
-
-    [0x3B] = KEY_F1,
-    [0x3C] = KEY_F2,
-    [0x3D] = KEY_F3,
-    [0x3E] = KEY_F4,
-    [0x3F] = KEY_F5,
-    [0x40] = KEY_F6,
-    [0x41] = KEY_F7,
-    [0x42] = KEY_F8,
-    [0x43] = KEY_F9,
-    [0x44] = KEY_F10,
-    [0x57] = KEY_F11,
-    [0x58] = KEY_F12,
-};
-
-static char* key_map_caps[128] = {
-    [0x1E] = 'A',
-    [0x30] = 'B',
-    [0x2E] = 'C',
-    [0x20] = 'D',
-    [0x12] = 'E',
-    [0x21] = 'F',
-    [0x22] = 'G',
-    [0x23] = 'H',
-    [0x17] = 'I',
-    [0x24] = 'J',
-    [0x25] = 'K',
-    [0x26] = 'L',
-    [0x32] = 'M',
-    [0x31] = 'N',
-    [0x18] = 'O',
-    [0x19] = 'P',
-    [0x10] = 'Q',
-    [0x13] = 'R',
-    [0x1F] = 'S',
-    [0x14] = 'T',
-    [0x16] = 'U',
-    [0x2F] = 'V',
-    [0x11] = 'W',
-    [0x2D] = 'X',
-    [0x15] = 'Y',
-    [0x2C] = 'Z',
-
-    [0x02] = '!',
-    [0x03] = '@',
-    [0x04] = '#',
-    [0x05] = '$',
-    [0x06] = '%',
-    [0x07] = '^',
-    [0x08] = '&',
-    [0x09] = '*',
-    [0x0A] = '(',
-    [0x0B] = ')',
-
-    [0x1C] = '<return>',
-    [0x01] = '<esc>',
-    [0x0E] = '<bs>',
-    [0x0F] = '\t',
-    [0x39] = ' ',
-    [0x0C] = '-',
-    [0x0D] = '=',
-    [0x1A] = '<',
-    [0x1B] = '>',
-    [0x2B] = '\\',
-    [0x27] = ';',
-    [0x28] = '\'',
-    [0x29] = KEY_GRAVE,
-    [0x33] = ',',
-    [0x34] = KEY_PERIOD,
-    [0x35] = '/',
-
-    [0x3A] = KEY_CAPS_LOCK,
-    [0x2A] = KEY_LEFT_SHIFT,
-    [0x36] = KEY_RIGHT_SHIFT,
-    [0x1D] = KEY_LEFT_CTRL,
-    [0x38] = KEY_LEFT_ALT,
-
-    [0x3B] = KEY_F1,
-    [0x3C] = KEY_F2,
-    [0x3D] = KEY_F3,
-    [0x3E] = KEY_F4,
-    [0x3F] = KEY_F5,
-    [0x40] = KEY_F6,
-    [0x41] = KEY_F7,
-    [0x42] = KEY_F8,
-    [0x43] = KEY_F9,
-    [0x44] = KEY_F10,
-    [0x57] = KEY_F11,
-    [0x58] = KEY_F12,
-};
 
 int write = 0;
 int caps = 0;
@@ -288,16 +153,22 @@ void handle_scancode(uint8_t sc)
         	return;
 	}
 	keycode_t key = scancode_map[sc];
-    	handle_key(key);
+
+    if (_listener != NULL) {
+        _listener(key);
+    }
+    
+    //handle_key(key);
 }
 
 void handle_key(keycode_t key)
-{/*
+{
 	switch (key) {
 		case KEY_DOWN:
-		move_cursor(DOWN);
+		//move_cursor(DOWN);
 		break;
-	}*/	
+	}
+    log_message(__PRETTY_FUNCTION__, "key pressed");
 }
 
 void keyboard_callback()
@@ -307,9 +178,7 @@ void keyboard_callback()
 
     keycode_t key_released = scancode_map[scancode & 0x7F];
     
-    //vga_write('a');
-
-    //handle_scancode(scancode);
+    handle_scancode(scancode);
 }
 
 int key_pressed(const keycode_t Key)

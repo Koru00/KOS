@@ -20,6 +20,12 @@
         "type_traits": "c",
         "xmemory": "c",
         "xtr1common": "c",
-        "xutility": "c"
+        "xutility": "c",
+        "memset.h": "c",
+        "cursor.h": "c",
+        "debug.h": "c",
+        "string.h": "c",
+        "power.h": "c",
+        "irq.h": "c"
     }
 }

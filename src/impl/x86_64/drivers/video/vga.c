@@ -1,12 +1,14 @@
 #include "vga.h"
 #include "debug.h"
-
-// Screen area
-#define SCREEN_SIZE (NUM_ROWS * NUM_COLS)
+#include "memset.h"
+#include "cursor.h"
 
 // Declaring the max nunber of col and row of the VGA
 const static size_t NUM_COLS = 80;
 const static size_t NUM_ROWS = 25;
+// Screen area
+#define SCREEN_SIZE (NUM_ROWS * NUM_COLS)
+
 
 // Structure for the characters on the VGA
 struct Char
@@ -25,7 +27,7 @@ size_t row = 0;
 // Color of the VGA
 uint8_t color = VGA_COLOR_WHITE | VGA_COLOR_BLACK << 4;
 
-// An empty character
+
 
 void clear_row(size_t row)
 {
@@ -37,7 +39,6 @@ void clear_row(size_t row)
     {
         buffer[col + NUM_COLS * row] = empty;
     }
-    col = 0;
 }
 
 void vga_clear()
@@ -47,6 +48,7 @@ void vga_clear()
         clear_row(i);
     };
     row = 0;
+    col = 0;
 }
 
 void vga_write(char character)
@@ -101,7 +103,7 @@ void vga_newline()
 int vga_line_l()
 {
     int last_char_col;
-    for (int col = NUM_COLS; col >= 0; col--)
+    for (int col = NUM_COLS-1; col >= 0; col--)
     {
         char c = buffer[row * NUM_COLS + col].character;
         if (c != ' ')
@@ -110,4 +112,10 @@ int vga_line_l()
         }
     }
     return 0;
+}
+
+void init_vga() {
+    memset(buffer, 0, SCREEN_SIZE * sizeof(struct Char));
+    vga_clear();
+    update_cursor(0,0);
 }

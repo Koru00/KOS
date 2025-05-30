@@ -23,6 +23,7 @@ enum
     VGA_COLOR_WHITE = 15,
 };
 
+void init_vga();
 void clear_row(size_t row);
 void vga_clear();
 void vga_color(uint8_t foreground, uint8_t background);

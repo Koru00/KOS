@@ -1,15 +1,15 @@
-#include "print.h"
-#include "idt.h"      // Include IDT header
-#include "keyboard.h" // Include keyboard header
+#include "../../intf/library/io/print.h"
+#include "../../intf/interrupts/idt.h"      // Include IDT header
+#include "../../intf/drivers/keyboard.h" // Include keyboard header
 #include "memset.h"
 #include "pit.h"
 #include "file.h"
-#include "debug.h"
+#include "../../intf/debug/debug.h"
 #include "power.h"
-#include "string.h"
-#include "irq.h"
-#include "vga.h"
-#include "cursor.h"
+#include "../../intf/library/str/string.h"
+#include "../../intf/interrupts/irq.h"
+#include "../../intf/drivers/vga.h"
+#include "../../intf/drivers/cursor.h"
 
 // #define PIT_ABLE 1
 
@@ -52,7 +52,11 @@ extern void irq_remap(void);
 
 char extstr[100];
 
-#define GREETING "hello"
+
+int main_kbd_listener(const keycode_t Key)
+{
+    printf("A");
+}
 
 void kernel_main()
 {
@@ -101,27 +105,19 @@ void kernel_main()
 
     timer_install();
 
+    // register the keyboards listeners
+    int res;
+    res = add_keyboard_listener(main_kbd_listener);
+
+    if (res != 0) {
+        printf("help me");
+    }
+
     asm volatile("sti");
 	
-    vga_clear();
+    init_vga();
+    
 
-    //vga_set_pos(1, 30);
-	
-//char str[20];
-//str[0] = 'H';
-//str[1] = 'I';
-//str[2] = '\0';
-//strcat(str, " world");
-     serial_print("test!");
-    serial_print("print 24");
-
-//char* str = "hi";
-	serial_print("print 666");
-	extstr[0] = 'a';
-	extstr[1] = '\0';
-	//strcat(extstr, "w");
-//int len = strlen(extstr);
-serial_print("aaaaa");	
 
     while (1)
     {

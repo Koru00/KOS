@@ -1,8 +1,4 @@
 
-
-
-
-/*
 int strlen(const char* str)
 {
 	int i;
@@ -10,12 +6,4 @@ int strlen(const char* str)
 	
 	}
 	return i;
-}
-*/
-
-int strlen(char *str)
-{
-
-	return 42;
-
 }

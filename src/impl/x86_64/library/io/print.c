@@ -11,26 +11,16 @@ const int tab_dimension = 3;
 
 void printf(const char *str, ...)
 {
-	serial_print("print 1");
 
     va_list args;
     va_start(args, str);
 
-	serial_print("print 2");
-
     for (size_t i = 0; 1; i++)
     {
 
-
         char character = (uint8_t)str[i];
 
-	char sp[3];
-
-	sp[0] = character;
-	sp[1] = '\n';
-	sp[2] = '\0';
-
-	serial_print(sp);
+        char sp[3];
 
         switch (character)
         {
@@ -47,28 +37,27 @@ void printf(const char *str, ...)
             char type = (uint8_t)str[++i];
             switch (type)
             {
-                case '%':
-                    vga_write('%');
-                    break;
-                case 'c':
-			char c = (char)(va_arg(args, int));
-			vga_write(c);
-                    break;
-		case 's':
-			char* s = va_arg(args, char*);
-			printf(s);
-			break;
-		case 'd':
-			int d = va_arg(args, int);
-			printf(int_to_str(d));
-			break;
-		case 'x':
-			unsigned int num = va_arg(args, unsigned int);
-			printf(hex_to_str(num));
-
+            case '%':
+                vga_write('%');
+                break;
+            case 'c':
+                char c = (char)(va_arg(args, int));
+                vga_write(c);
+                break;
+            case 's':
+                char *s = va_arg(args, char *);
+                printf(s);
+                break;
+            case 'd':
+                int d = va_arg(args, int);
+                printf(int_to_str(d));
+                break;
+            case 'x':
+                unsigned int num = va_arg(args, unsigned int);
+                printf(hex_to_str(num));
             }
             break;
-        default:	   
+        default:
             vga_write(character);
             break;
         }
@@ -87,7 +76,7 @@ void print_tab()
     }
 }
 
-void scanf(char* output)
+void scanf(char *output)
 {
     char scan[25];
     int length = vga_line_l();
