@@ -3,6 +3,7 @@
 #include "keyboard.h"
 #include "print.h"
 #include "cursor.h"
+#include "debug.h"
 
 int pos_row = 0;
 int pos_col = 0;
@@ -24,6 +25,7 @@ void update_cursor(int row, int col)
 
     port_byte_out(0x3D4, 0x0E);
     port_byte_out(0x3D5, (uint8_t)((position >> 8) & 0xFF));
+    log_message(__PRETTY_FUNCTION__, "updated position of the cursor");
 }
 void move_cursor(Dir dir)
 {

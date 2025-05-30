@@ -1,7 +1,7 @@
 #pragma once
 
 typedef enum {
-    UP = 0,  // You can start at 0 or any number
+    UP = 0,
     LEFT  = 1,
     DOWN = 2,
     RIGHT  = 3
