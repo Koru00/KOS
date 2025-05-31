@@ -69,11 +69,16 @@ void keyboard_init();
 // Keyboard interrupt handler callback
 void keyboard_callback();
 int key_pressed(const keycode_t Key);
+int key_realesed(const keycode_t Key);
 
 // this is the declaration of a pointer to function which gets a key.
 typedef int (*key_pressed_fn)(const keycode_t Key);
+typedef int (*key_realesed_fn)(const keycode_t Key);
 
 // this is a function to add a listener to the keyboard.
 // for now only one listener is accepted.
 // if you add more the function will fail.
 int add_keyboard_listener(key_pressed_fn a_listener);
+int add_keyboard_realese_listener(key_realesed_fn a_listener);
+
+char keycode_to_ascii(keycode_t key);

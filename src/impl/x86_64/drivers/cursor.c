@@ -4,6 +4,7 @@
 #include "print.h"
 #include "cursor.h"
 #include "debug.h"
+#include "string.h"
 
 int pos_row = 0;
 int pos_col = 0;
@@ -11,7 +12,33 @@ int pos_col = 0;
 // It say if the cursor can move
 int cursor_move = 1;
 
+int cursor_kbd_listener(const keycode_t Key)
+{
+    switch (Key)
+    {
+    case KEY_UP:
+        move_cursor(UP);
+        break;
+    case KEY_DOWN:
+        move_cursor(DOWN);
+        break;
+    case KEY_LEFT:
+        move_cursor(LEFT);
+        break;
+    case KEY_RIGHT:
+        move_cursor(RIGHT);
+        break;
+    
+    default:
+        break;
+    }
+}
 
+void init_cursor()
+{
+    int res;
+    res = add_keyboard_listener(cursor_kbd_listener);
+}
 
 void update_cursor(int row, int col)
 {
@@ -33,16 +60,16 @@ void move_cursor(Dir dir)
     {
         switch (dir)
         {
-        case 0:
+        case UP:
             update_cursor(pos_row - 1, pos_col);
             break;
-        case 1:
+        case DOWN:
             update_cursor(pos_row + 1, pos_col);
             break;
-        case 2:
+        case LEFT:
             update_cursor(pos_row, pos_col - 1);
             break;
-        case 3:
+        case RIGHT:
             update_cursor(pos_row, pos_col + 1);
             break;
         default:
