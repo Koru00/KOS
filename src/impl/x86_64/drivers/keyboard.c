@@ -95,7 +95,7 @@ static keycode_t scancode_map[128] = {
     [0x57] = KEY_F11,
     [0x58] = KEY_F12,
 };
-keycode_t extended_scancode_map[128] = {
+keycode_t extended_scancode_map[94] = {
     [0x1C] = KEY_NUMPAD_ENTER,
     [0x1D] = KEY_RIGHT_CTRL,
     [0x35] = KEY_NUMPAD_DIVIDE,
@@ -119,69 +119,99 @@ keycode_t extended_scancode_map[128] = {
 #define NUM_HIST_KEYS 10
 static keycode_t last_keys[NUM_HIST_KEYS];
 // we have only one listener for now
-static key_pressed_fn _listener = NULL;
-
-int add_keyboard_listener(key_pressed_fn a_listener)
-{
-    if (_listener != NULL) {
-        log_message(__PRETTY_FUNCTION__, "There is already one listener");
-        return -1;
-    }
-
-    _listener = a_listener;
-    return 0;
-}
-
-
-int write = 0;
-int caps = 0;
+#define MAX_LISTENER 10
+static key_pressed_fn _listener[MAX_LISTENER];
+static key_realesed_fn _listener_realese[MAX_LISTENER];
+static int index_listener = 0;
+static int index_listener_realese = 0;
 
 int extended;
 
-void handle_scancode(uint8_t sc)
+int add_keyboard_listener(key_pressed_fn a_listener)
 {
-	if (sc == 0xE0)
-	{
-		extended = 1;
-		return;
-	}
-	if (extended)
-	{
-		keycode_t key = extended_scancode_map[sc];
-        	extended = 0;
-        	handle_key(key);
-        	return;
-	}
-	keycode_t key = scancode_map[sc];
-
-    if (_listener != NULL) {
-        _listener(key);
+    if (index_listener > MAX_LISTENER)
+    {
+        log_message(__PRETTY_FUNCTION__, "listeners are more then 10");
+        return 1;
     }
-    
-    //handle_key(key);
+    _listener[index_listener++] = a_listener;
+    return 0;
+}
+int add_keyboard_realese_listener(key_realesed_fn a_listener)
+{
+    if (index_listener_realese > MAX_LISTENER)
+    {
+        log_message(__PRETTY_FUNCTION__, "listeners are more then 10");
+        return 1;
+    }
+    _listener_realese[index_listener_realese++] = a_listener;
+    return 0;
 }
 
-void handle_key(keycode_t key)
-{
-	switch (key) {
-		case KEY_DOWN:
-		//move_cursor(DOWN);
-		break;
-	}
-    log_message(__PRETTY_FUNCTION__, "key pressed");
-}
+int is_release;
 
 void keyboard_callback()
 {
     uint8_t scancode = port_byte_in(0x60);
-    int is_release = scancode & 0x80;
+    is_release = scancode & 0x80;
 
     keycode_t key_released = scancode_map[scancode & 0x7F];
-    
+
     handle_scancode(scancode);
+}
+
+void handle_scancode(uint8_t sc)
+{
+    keycode_t key;
+
+    if (sc == 0xE0)
+    {
+        extended = 1;
+        return;
+    }
+    if (is_release)
+    {
+        sc = sc & 0x7F;
+    }
+    if (extended)
+    {
+        key = extended_scancode_map[sc];
+        extended = 0;
+    }
+    else
+    {
+        key = scancode_map[sc];
+    }
+
+    if (_listener != NULL && !is_release)
+    {
+        for (int i = 0; i < index_listener; i++)
+        {
+            if (_listener[i] != NULL)
+            {
+                _listener[i](key);
+            }
+        }
+    }
+    else if (_listener_realese != NULL && is_release)
+    {
+        for (int i = 0; i < index_listener_realese; i++)
+        {
+            if (_listener_realese[i] != NULL)
+            {
+                _listener_realese[i](key);
+            }
+        }
+    }
+
+    // handle_key(key);
+}
+
+void handle_key(keycode_t key)
+{
+    log_message(__PRETTY_FUNCTION__, "key pressed");
 }
 
 int key_pressed(const keycode_t Key)
 {
-
 }

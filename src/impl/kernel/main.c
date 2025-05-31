@@ -1,6 +1,6 @@
-#include "../../intf/library/io/print.h"
-#include "../../intf/interrupts/idt.h"      // Include IDT header
-#include "../../intf/drivers/keyboard.h" // Include keyboard header
+#include "print.h"
+#include "idt.h"
+#include "../../intf/drivers/keyboard.h"
 #include "memset.h"
 #include "pit.h"
 #include "file.h"
@@ -10,6 +10,7 @@
 #include "../../intf/interrupts/irq.h"
 #include "../../intf/drivers/vga.h"
 #include "../../intf/drivers/cursor.h"
+#include "input.h"
 
 // #define PIT_ABLE 1
 
@@ -55,8 +56,9 @@ char extstr[100];
 
 int main_kbd_listener(const keycode_t Key)
 {
-    printf("A");
+    
 }
+
 
 void kernel_main()
 {
@@ -105,18 +107,18 @@ void kernel_main()
 
     timer_install();
 
+    init_cursor();
+
     // register the keyboards listeners
     int res;
     res = add_keyboard_listener(main_kbd_listener);
-
-    if (res != 0) {
-        printf("help me");
-    }
+    
 
     asm volatile("sti");
 	
     init_vga();
-    
+
+    init_input();
 
 
     while (1)
