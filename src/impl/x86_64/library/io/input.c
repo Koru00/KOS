@@ -4,6 +4,7 @@
 static int caps = 0;
 static int shifted = 0;
 static int realesed = 0;
+static const int tab_dimension = 3;
 
 #define CONVERT_CAPS_CHAR(_HIGH, _LOW) ((caps == 1) ? _HIGH : _LOW)
 #define CONVERT_SHIFT_CHAR(_HIGH, _LOW) ((shifted == 0) ? _HIGH : _LOW)
@@ -84,15 +85,37 @@ char keycode_to_ascii(keycode_t key)
         return CONVERT_SHIFT_CHAR('9', '(');
     case KEY_0:
         return CONVERT_SHIFT_CHAR('0', ')');
+    case KEY_NUMPAD0:
+        return '0';
+    case KEY_NUMPAD1:
+        return '1';
+    case KEY_NUMPAD2:
+        return '2';
+    case KEY_NUMPAD3:
+        return '3';
+    case KEY_NUMPAD4:
+        return '4';
+    case KEY_NUMPAD5:
+        return '5';
+    case KEY_NUMPAD6:
+        return '6';
+    case KEY_NUMPAD7:
+        return '7';
+    case KEY_NUMPAD8:
+        return '8';
+    case KEY_NUMPAD9:
+        return '9';
     case KEY_SPACE:
         return ' ';
     case KEY_ENTER:
         vga_newline();
-        break;
+        return 0;
     case KEY_TAB:
-        return '\t';
+        tab();
+        return 0;
     case KEY_BACKSPACE:
         vga_backspace();
+        return 0;
         break;
     case KEY_MINUS:
         return CONVERT_SHIFT_CHAR('-', '_');
@@ -144,7 +167,7 @@ int input_kbd_listener(const keycode_t Key)
     shift(Key);
     char c = keycode_to_ascii(Key);
     // This is for not printing not printable key
-    if (c < 38)
+    if (c == 0)
     {
         return;
     }
@@ -160,4 +183,12 @@ void init_input()
     int res;
     res = add_keyboard_listener(input_kbd_listener);
     res = add_keyboard_realese_listener(input_kbd_listener_realesed);
+}
+
+void tab()
+{
+    for (int i = 0; i < tab_dimension; i++)
+    {
+        vga_write(' ');
+    }
 }

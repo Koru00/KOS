@@ -131,7 +131,7 @@ int add_keyboard_listener(key_pressed_fn a_listener)
 {
     if (index_listener > MAX_LISTENER)
     {
-        log_message(__PRETTY_FUNCTION__, "listeners are more then 10");
+        log_message(__PRETTY_FUNCTION__, "listeners are more then 10", LOG_ERROR);
         return 1;
     }
     _listener[index_listener++] = a_listener;
@@ -141,7 +141,7 @@ int add_keyboard_realese_listener(key_realesed_fn a_listener)
 {
     if (index_listener_realese > MAX_LISTENER)
     {
-        log_message(__PRETTY_FUNCTION__, "listeners are more then 10");
+        log_message(__PRETTY_FUNCTION__, "listeners are more then 10", LOG_ERROR);
         return 1;
     }
     _listener_realese[index_listener_realese++] = a_listener;
