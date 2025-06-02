@@ -6,8 +6,9 @@
 #include "vga.h"
 #include "debug.h"
 #include "stdarg.h"
+#include "input.h"
 
-const int tab_dimension = 3;
+
 
 void printf(const char *str, ...)
 {
@@ -31,7 +32,7 @@ void printf(const char *str, ...)
             vga_newline();
             break;
         case '\t':
-            print_tab();
+            tab();
             break;
         case '%':
             char type = (uint8_t)str[++i];
@@ -68,13 +69,7 @@ end:
     va_end(args);
 }
 
-void print_tab()
-{
-    for (int i = 0; i < tab_dimension; i++)
-    {
-        vga_write(' ');
-    }
-}
+
 
 void scanf(char *output)
 {

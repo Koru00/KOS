@@ -5,6 +5,7 @@
 #include "cursor.h"
 #include "debug.h"
 #include "string.h"
+#include "vga.h"
 
 int pos_row = 0;
 int pos_col = 0;
@@ -42,6 +43,10 @@ void init_cursor()
 
 void update_cursor(int row, int col)
 {
+    if (vga_bounds(col, row))
+    {
+        return;
+    }
     uint16_t position = row * 80 + col;
 
     pos_col = col;
@@ -52,7 +57,6 @@ void update_cursor(int row, int col)
 
     port_byte_out(0x3D4, 0x0E);
     port_byte_out(0x3D5, (uint8_t)((position >> 8) & 0xFF));
-    log_message(__PRETTY_FUNCTION__, "updated position of the cursor");
 }
 void move_cursor(Dir dir)
 {

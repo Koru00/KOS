@@ -26,6 +26,10 @@
         "debug.h": "c",
         "string.h": "c",
         "power.h": "c",
-        "irq.h": "c"
+        "irq.h": "c",
+        "vga.h": "c",
+        "iterator": "c",
+        "initializer_list": "c",
+        "xstring": "c"
     }
 }

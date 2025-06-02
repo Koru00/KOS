@@ -11,8 +11,7 @@
 #include "../../intf/drivers/vga.h"
 #include "../../intf/drivers/cursor.h"
 #include "input.h"
-
-// #define PIT_ABLE 1
+#include "ports.h"
 
 #define NUM_GDT_ENTRIES 5
 
@@ -56,7 +55,37 @@ char extstr[100];
 
 int main_kbd_listener(const keycode_t Key)
 {
-    
+    switch (Key)
+    {
+    case KEY_0: // Block cursor (start: 0, end: 15)
+        port_byte_out(0x3D4, 0x0A); // Select Cursor Start Register
+        port_byte_out(0x3D5, 0x00); // Start at scanline 0
+        port_byte_out(0x3D4, 0x0B); // Select Cursor End Register
+        port_byte_out(0x3D5, 0x0F); // End at scanline 15
+        break;
+
+    case KEY_1: // Underline cursor (start: 13, end: 15)
+        port_byte_out(0x3D4, 0x0A);
+        port_byte_out(0x3D5, 0x0D);
+        port_byte_out(0x3D4, 0x0B);
+        port_byte_out(0x3D5, 0x0F);
+        break;
+
+    case KEY_2: // Half-height cursor (start: 7, end: 15)
+        port_byte_out(0x3D4, 0x0A);
+        port_byte_out(0x3D5, 0x07);
+        port_byte_out(0x3D4, 0x0B);
+        port_byte_out(0x3D5, 0x0F);
+        break;
+
+    case KEY_3: // Invisible cursor (set start > end or bit 5 = 1)
+        port_byte_out(0x3D4, 0x0A);
+        port_byte_out(0x3D5, 0x20); // Bit 5 = 1 hides cursor
+        break;
+
+    default:
+        break;
+    }
 }
 
 
@@ -119,6 +148,7 @@ void kernel_main()
     init_vga();
 
     init_input();
+
 
 
     while (1)

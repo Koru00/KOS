@@ -33,3 +33,5 @@ void vga_newline();
 int vga_line_l();
 void vga_set_pos(int _col, int _row);
 void vga_backspace();
+void vga_set_bounds(int x, int y, int w, int h);
+int vga_bounds(int x, int y);

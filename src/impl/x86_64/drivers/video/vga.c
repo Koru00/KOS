@@ -79,7 +79,7 @@ void vga_set_pos(int _col, int _row)
 {
     if (_col > NUM_COLS || _col < 0 || _row > NUM_ROWS || _row < 0)
     {
-        log_message(__PRETTY_FUNCTION__, "col or row out of bouds");
+        log_message(__PRETTY_FUNCTION__, "col or row out of bouds", LOG_WARNING);
         return;
     }
     col = _col;
@@ -101,30 +101,35 @@ char vga_read(int col, int row)
 void vga_newline()
 {
     col = 0;
+
     if (row < NUM_ROWS - 1)
     {
         row++;
     }
-    else if (row > NUM_ROWS - 1)
+    else
     {
-        for (size_t row = 1; row < NUM_ROWS; row++)
+        // Scroll all rows up
+        for (size_t r = 1; r < NUM_ROWS; r++)
         {
-            for (size_t col = 0; col < NUM_COLS; col++)
+            for (size_t c = 0; c < NUM_COLS; c++)
             {
-                struct Char character = buffer[col + NUM_COLS * row];
-                buffer[col + NUM_COLS * (row - 1)] = character;
+                struct Char character = buffer[c + NUM_COLS * r];
+                buffer[c + NUM_COLS * (r - 1)] = character;
             }
         }
-        clear_row(NUM_COLS - 1);
+
+        // Clear the last row (now row NUM_ROWS - 1)
+        clear_row(NUM_ROWS - 1);
     }
+
     vga_refresh();
 }
 
 void vga_backspace()
 {
-    if (vga_bounds())
+    if (col == 0 && row == 0)
     {
-        log_message(__PRETTY_FUNCTION__, "out of the VGA bounds");
+        log_message(__PRETTY_FUNCTION__, "out of the VGA bounds", LOG_INFO);
         return;
     }
     if (col == 0)
@@ -156,28 +161,13 @@ int vga_line_l()
 
 int bounds[4];
 
-int vga_bounds()
+int vga_bounds(int x, int y)
 {
-    if (bounds[0] > col-1)
+    if (x < bounds[0] || y < bounds[1] || x > bounds[2] || y > bounds[3])
     {
         return 1;
     }
-    else if (bounds[1] > row-1)
-    {
-        return 1;
-    }
-    else if (bounds[2] < col+1)
-    {
-        return 1;
-    }
-    else if (bounds[3] < row+1)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 void vga_set_bounds(int x, int y, int w, int h)
@@ -186,7 +176,7 @@ void vga_set_bounds(int x, int y, int w, int h)
     bounds[1] = y;
     bounds[2] = w;
     bounds[3] = h;
-    log_message(__PRETTY_FUNCTION__, "updated bouds of the VGA");
+    log_message(__PRETTY_FUNCTION__, "updated bouds of the VGA", LOG_INFO);
 }
 
 void init_vga()
@@ -194,6 +184,6 @@ void init_vga()
     memset(buffer, 0, SCREEN_SIZE * sizeof(struct Char));
     vga_refresh();
     vga_clear();
-    vga_set_bounds(0, 0, NUM_COLS, NUM_ROWS);
-    log_message(__PRETTY_FUNCTION__, "vga initialized");
+    vga_set_bounds(0, 0, NUM_COLS-1, NUM_ROWS-1);
+    log_message(__PRETTY_FUNCTION__, "vga initialized%d", LOG_INFO, NUM_COLS);
 }
