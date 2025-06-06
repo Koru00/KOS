@@ -209,7 +209,7 @@ void handle_scancode(uint8_t sc)
 
 void handle_key(keycode_t key)
 {
-    log_message(__PRETTY_FUNCTION__, "key pressed");
+//    log_message(__PRETTY_FUNCTION__, "key pressed");
 }
 
 int key_pressed(const keycode_t Key)

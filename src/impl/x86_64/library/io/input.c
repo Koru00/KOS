@@ -16,7 +16,7 @@ char keycode_to_ascii(keycode_t key)
     case KEY_A:
         return CONVERT_CAPS_CHAR('A', 'a');
     case KEY_B:
-        return CONVERT_CAPS_CHAR('B', 'a');
+        return CONVERT_CAPS_CHAR('B', 'b');
     case KEY_C:
         return CONVERT_CAPS_CHAR('C', 'c');
     case KEY_D:

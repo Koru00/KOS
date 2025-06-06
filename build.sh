@@ -1,5 +1,7 @@
 #!/bin/bash
 
+clear
+
 # Run Docker container and build inside it
 docker run --rm -it -v "$(pwd)":/root/env myos-buildenv bash -c "cd /root/env && make build-x86_64"
 exit_code=$?

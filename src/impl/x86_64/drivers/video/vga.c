@@ -185,5 +185,5 @@ void init_vga()
     vga_refresh();
     vga_clear();
     vga_set_bounds(0, 0, NUM_COLS-1, NUM_ROWS-1);
-    log_message(__PRETTY_FUNCTION__, "vga initialized%d", LOG_INFO, NUM_COLS);
+//    log_message(__PRETTY_FUNCTION__, "vga initialized%d", LOG_INFO, NUM_COLS);
 }
