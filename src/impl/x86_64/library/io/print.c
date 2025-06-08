@@ -7,7 +7,7 @@
 #include "debug.h"
 #include "stdarg.h"
 #include "input.h"
-
+#include "keyboard.h"
 
 
 void printf(const char *str, ...)

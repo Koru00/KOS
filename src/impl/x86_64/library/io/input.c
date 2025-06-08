@@ -5,12 +5,17 @@ static int caps = 0;
 static int shifted = 0;
 static int realesed = 0;
 static const int tab_dimension = 3;
+static int printing = 0;
 
 #define CONVERT_CAPS_CHAR(_HIGH, _LOW) ((caps == 1) ? _HIGH : _LOW)
 #define CONVERT_SHIFT_CHAR(_HIGH, _LOW) ((shifted == 0) ? _HIGH : _LOW)
 
 char keycode_to_ascii(keycode_t key)
 {
+  if (!printing)
+  {
+    return 0;
+  }
     switch (key)
     {
     case KEY_A:
@@ -161,8 +166,11 @@ void shift(keycode_t Key)
     }
 }
 
+keycode_t key;
+
 int input_kbd_listener(const keycode_t Key)
 {
+    key = Key;
     caps_lock(Key);
     shift(Key);
     char c = keycode_to_ascii(Key);
@@ -172,7 +180,14 @@ int input_kbd_listener(const keycode_t Key)
         return;
     }
     vga_write(c);
+  key == NULL;
 }
+
+void kb_print(int state)
+{
+  printing = state;
+}
+
 int input_kbd_listener_realesed(const keycode_t Key)
 {
     shift(Key);
@@ -191,4 +206,9 @@ void tab()
     {
         vga_write(' ');
     }
+}
+
+keycode_t getch()
+{
+  while (key == NULL);
 }

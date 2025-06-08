@@ -6,12 +6,15 @@
 #include "file.h"
 #include "../../intf/debug/debug.h"
 #include "power.h"
-#include "../../intf/library/str/string.h"
+#include "string.h"
 #include "../../intf/interrupts/irq.h"
 #include "../../intf/drivers/vga.h"
 #include "../../intf/drivers/cursor.h"
 #include "input.h"
 #include "ports.h"
+#include "heap_alloc.h"
+#include "strcat.h"
+#include "output.h"
 
 #define NUM_GDT_ENTRIES 5
 
@@ -148,8 +151,10 @@ void kernel_main()
     init_vga();
 
     init_input();
-
-
+    kb_print(0);
+    
+    init_output();
+  
 
     while (1)
     {
