@@ -151,10 +151,9 @@ void kernel_main()
     init_vga();
 
     init_input();
-    kb_print(0);
+    kb_print(1);
     
     init_output();
-  
 
     while (1)
     {
