@@ -1,32 +1,112 @@
-kernel_source_files := $(shell find src/impl/kernel -name '*.c')
-kernel_object_files := $(foreach f,$(kernel_source_files),$(patsubst src/impl/kernel/%,build/kernel/%,$(f:.c=.o)))
+# -----------------------------------------------------------------------------
+# Robust Makefile for OS kernel (x86_64)
+# - Recursively finds all .c and .asm under src/impl
+# - Automatic dependency tracking via -MMD -MP
+# - Configurable compiler flags, dirs, and QEMU options
+# - Verbose and quiet modes
+# - Phony targets: all, clean, run, iso
+# -----------------------------------------------------------------------------
 
-x86_64_c_source_files := $(shell find src/impl/x86_64 -name '*.c')
-x86_64_c_object_files := $(foreach f,$(x86_64_c_source_files),$(patsubst src/impl/x86_64/%,build/x86_64/%,$(f:.c=.o)))
+# =============================================================================
+# Configuration Variables
+# =============================================================================
 
-c_include_dirs := $(shell find src/intf -type d)
-c_include_flags := $(foreach dir,$(c_include_dirs),-I$(dir))
+# Directories
+SRC_DIR       := src/impl
+BUILD_DIR     := build
+DIST_DIR      := dist/x86_64
+ISO_NAME      := kernel.iso
+LINKER_SCRIPT := targets/x86_64/linker.ld
+ISO_ROOT      := targets/x86_64/iso
 
-x86_64_asm_source_files := $(shell find src/impl/x86_64 -name '*.asm')
-x86_64_asm_object_files := $(foreach f,$(x86_64_asm_source_files),$(patsubst src/impl/x86_64/%,build/x86_64/%,$(f:.asm=.o)))
+# Tools
+CC            := x86_64-elf-gcc
+AS            := nasm
+LD            := x86_64-elf-ld
+GRUB          := grub-mkrescue
+QEMU          := qemu-system-x86_64
 
-x86_64_object_files := $(x86_64_c_object_files) $(x86_64_asm_object_files)
+# Resource defaults
+QEMU_CORES    := 4
+QEMU_RAM      := 2048
+KVM_FLAG      := -enable-kvm
 
-$(kernel_object_files): build/kernel/%.o : src/impl/kernel/%.c
-	mkdir -p $(dir $@) && \
-	x86_64-elf-gcc -c -I src/intf $(c_include_flags) -ffreestanding $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@ 
+# Flags
+CFLAGS        := -ffreestanding -Wall -Wextra -Wpedantic -Werror -I src/intf
+CFLAGS       += -MMD -MP             # dependency generation
+ASFLAGS       := -f elf64
+LDFLAGS       := -n -T $(LINKER_SCRIPT)
 
-$(x86_64_c_object_files): build/x86_64/%.o : src/impl/x86_64/%.c
-	mkdir -p $(dir $@) && \
-	x86_64-elf-gcc -c -I src/intf $(c_include_flags) -ffreestanding $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+# =============================================================================
+# Derived Lists
+# =============================================================================
 
-$(x86_64_asm_object_files): build/x86_64/%.o : src/impl/x86_64/%.asm
-	mkdir -p $(dir $@) && \
-	nasm -f elf64 $(patsubst build/x86_64/%.o, src/impl/x86_64/%.asm, $@) -o $@
+# Source files
+C_SOURCES     := $(shell find $(SRC_DIR) -type f -name "*.c")
+ASM_SOURCES   := $(shell find $(SRC_DIR) -type f -name "*.asm")
 
-.PHONY: build-x86_64
-build-x86_64: $(kernel_object_files) $(x86_64_object_files)
-	mkdir -p dist/x86_64 && \
-	x86_64-elf-ld -n -o dist/x86_64/kernel.bin -T targets/x86_64/linker.ld $(kernel_object_files) $(x86_64_object_files)
-	cp dist/x86_64/kernel.bin targets/x86_64/iso/boot/kernel.bin && \
-	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86_64/kernel.iso targets/x86_64/iso
+# Object files
+C_OBJECTS     := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SOURCES))
+ASM_OBJECTS   := $(patsubst $(SRC_DIR)/%.asm,$(BUILD_DIR)/%.o,$(ASM_SOURCES))
+OBJECTS       := $(C_OBJECTS) $(ASM_OBJECTS)
+
+# Dependency files
+DEPS          := $(C_OBJECTS:.o=.d)
+
+# =============================================================================
+# Default target
+# =============================================================================
+.PHONY: all
+all: $(DIST_DIR)/$(ISO_NAME)
+
+# =============================================================================
+# Build ISO
+# =============================================================================
+$(DIST_DIR)/$(ISO_NAME): $(DIST_DIR)/kernel.bin
+	@echo "[INFO] Generating ISO $(ISO_NAME)"
+	$(GRUB) /usr/lib/grub/i386-pc -o $@ $(ISO_ROOT)
+
+# Link kernel binary
+$(DIST_DIR)/kernel.bin: $(OBJECTS)
+	@mkdir -p $(DIST_DIR)
+	@echo "[INFO] Linking kernel binary"
+	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
+
+# =============================================================================
+# Compile C sources
+# =============================================================================
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	@echo "[CC] $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# =============================================================================
+# Assemble ASM sources
+# =============================================================================
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.asm
+	@mkdir -p $(@D)
+	@echo "[AS] $<"
+	$(AS) $(ASFLAGS) $< -o $@
+
+# =============================================================================
+# Run in QEMU
+# =============================================================================
+.PHONY: run
+run: all
+	@echo "[INFO] Launching QEMU"
+	$(QEMU) $(KVM_FLAG) -cpu host -smp $(QEMU_CORES) -m $(QEMU_RAM) \
+		-cdrom $(DIST_DIR)/$(ISO_NAME) \
+		-serial file:debug_log/.debug_log.txt \
+		-monitor stdio -boot d
+
+# =============================================================================
+# Clean up artifacts
+# =============================================================================
+.PHONY: clean
+clean:
+	rm -rf $(BUILD_DIR) $(DIST_DIR)
+
+# =============================================================================
+# Include dependency files
+# =============================================================================
+-include $(DEPS)
