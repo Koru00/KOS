@@ -12,7 +12,7 @@ extern void isr128();
 static struct IDTEntry idt[IDT_ENTRIES];
 static struct IDTPointer idt_ptr;
 
-static void set_idt_gate(int n, uint64_t handler, uint16_t sel, uint8_t flags) {
+void set_idt_gate(int n, uint64_t handler, uint16_t sel, uint8_t flags) {
     idt[n].offset_low  = (uint16_t)(handler & 0xFFFF);
     idt[n].selector    = sel;
     idt[n].ist         = 0;

@@ -1,6 +1,6 @@
 @echo off
 :: Run Docker container and build inside it
-docker run --rm -it -v "%cd%":/root/env myos-buildenv bash -c "cd /root/env && make build-x86_64"
+docker run --rm -it -v "%cd%":/root/env myos-buildenv bash -c "cd /root/env && make"
 
 Set _fRed=[31m
 Set _fGreen=[32m

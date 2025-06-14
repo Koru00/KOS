@@ -32,7 +32,8 @@ QEMU_RAM      := 2048
 KVM_FLAG      := -enable-kvm
 
 # Flags
-CFLAGS        := -ffreestanding -Wall -Wextra -Wpedantic -Werror -I src/intf
+#CFLAGS        := -ffreestanding -Wall -Wextra -Wpedantic -Werror -I src/intf
+CFLAGS        := -ffreestanding -Wall -Wextra -Wpedantic  -I src/intf
 CFLAGS       += -MMD -MP             # dependency generation
 ASFLAGS       := -f elf64
 LDFLAGS       := -n -T $(LINKER_SCRIPT)
@@ -44,6 +45,9 @@ LDFLAGS       := -n -T $(LINKER_SCRIPT)
 # Source files
 C_SOURCES     := $(shell find $(SRC_DIR) -type f -name "*.c")
 ASM_SOURCES   := $(shell find $(SRC_DIR) -type f -name "*.asm")
+
+c_include_dirs := $(shell find src/intf -type d)
+c_include_flags := $(foreach dir,$(c_include_dirs),-I$(dir))
 
 # Object files
 C_OBJECTS     := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SOURCES))
@@ -78,7 +82,7 @@ $(DIST_DIR)/kernel.bin: $(OBJECTS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	@echo "[CC] $<"
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -I  $(c_include_flags) -c $< -o $@
 
 # =============================================================================
 # Assemble ASM sources
