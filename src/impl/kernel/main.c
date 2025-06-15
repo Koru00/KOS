@@ -9,7 +9,7 @@
 #include "string.h"
 #include "../../intf/interrupts/irq.h"
 #include "../../intf/drivers/vga.h"
-#include "../../intf/drivers/cursor.h"
+#include "cursor.h"
 #include "input.h"
 #include "ports.h"
 #include "heap_alloc.h"
@@ -58,37 +58,7 @@ char extstr[100];
 
 int main_kbd_listener(const keycode_t Key)
 {
-    switch (Key)
-    {
-    case KEY_0: // Block cursor (start: 0, end: 15)
-        port_byte_out(0x3D4, 0x0A); // Select Cursor Start Register
-        port_byte_out(0x3D5, 0x00); // Start at scanline 0
-        port_byte_out(0x3D4, 0x0B); // Select Cursor End Register
-        port_byte_out(0x3D5, 0x0F); // End at scanline 15
-        break;
 
-    case KEY_1: // Underline cursor (start: 13, end: 15)
-        port_byte_out(0x3D4, 0x0A);
-        port_byte_out(0x3D5, 0x0D);
-        port_byte_out(0x3D4, 0x0B);
-        port_byte_out(0x3D5, 0x0F);
-        break;
-
-    case KEY_2: // Half-height cursor (start: 7, end: 15)
-        port_byte_out(0x3D4, 0x0A);
-        port_byte_out(0x3D5, 0x07);
-        port_byte_out(0x3D4, 0x0B);
-        port_byte_out(0x3D5, 0x0F);
-        break;
-
-    case KEY_3: // Invisible cursor (set start > end or bit 5 = 1)
-        port_byte_out(0x3D4, 0x0A);
-        port_byte_out(0x3D5, 0x20); // Bit 5 = 1 hides cursor
-        break;
-
-    default:
-        break;
-    }
 }
 
 
@@ -154,6 +124,11 @@ void kernel_main()
     kb_print(1);
     
     init_output();
+
+  printf("Hello");
+  char* line[100];
+  scanf(line);
+  printf("\n%s", line);
 
     while (1)
     {

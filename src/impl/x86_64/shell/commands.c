@@ -4,8 +4,9 @@
 #include "file.h"
 #include "power.h"
 #include "string.h"
+#include "stdio.h"
 
-int tokenize(char *input, char **tokens, int max_tokens)
+int tokenize_old(char *input, char **tokens, int max_tokens)
 {
     int i = 0;
     while (*input && i < max_tokens)
@@ -136,3 +137,4 @@ void commands(char *text)
     }
 }
     */
+

@@ -71,17 +71,7 @@ end:
 
 
 
-void scanf(char *output)
-{
-    char scan[25];
-    int length = vga_line_l();
-    for (int i = 0; i < length; i++)
-    {
-        scan[i] = vga_read(i, 0);
-    }
-    output = malloc(scan);
-    return output;
-}
+
 
 // DEPRECATED
 /*

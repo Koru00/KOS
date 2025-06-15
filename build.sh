@@ -1,46 +1,42 @@
 #!/usr/bin/env bash
 
-# -----------------------------------------------------------------------------
-# build.sh — Build and run kernel in Docker + QEMU, with clean, colored output
-# -----------------------------------------------------------------------------
+# Colors
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+CYAN=$(tput setaf 6)
+NC=$(tput sgr0)
 
-# Color codes for pretty output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# Helper to print a section header
-header() {
-    echo -e "\n${CYAN}▶▶ $1${NC}"
-}
-
-# Helper to print status messages
+header() { echo -e "\n${CYAN}▶▶ $1${NC}"; }
 success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 info()    { echo -e "${YELLOW}[INFO]${NC}    $1"; }
 error()   { echo -e "${RED}[ERROR]${NC}   $1"; }
 
-# Exit on error, undefined variable, or pipefail
 set -euo pipefail
 trap 'error "Unexpected failure at line $LINENO."; exit 1' ERR
 
 clear
 
-header "Starting Docker build"
-# Check if Docker image exists
-if ! sudo docker image inspect myos-buildenv >/dev/null 2>&1; then
+header "Checking Docker"
+DOCKER="docker"
+if ! docker ps >/dev/null 2>&1; then
+    if command -v sudo >/dev/null; then
+        DOCKER="sudo docker"
+    else
+        error "Docker needs root privileges, and sudo is missing."
+        exit 1
+    fi
+fi
+
+if ! $DOCKER image inspect myos-buildenv >/dev/null 2>&1; then
     error "Docker image 'myos-buildenv' not found."
-    echo "Please build it using:"
-    echo "  docker build -t myos-buildenv docker/"
+    echo "Please build it with: docker build -t myos-buildenv docker/"
     exit 1
 fi
 
-# Run the build inside Docker
-if sudo docker run --rm -it \
-    -v "$(pwd)":/root/env \
-    myos-buildenv bash -lc "cd /root/env && make"; then
-    success "Kernel compiled inside Docker."
+header "Starting Docker build"
+if $DOCKER run --rm -it -v "$(pwd)":/root/env myos-buildenv bash -lc "cd /root/env && make"; then
+    success "Kernel compiled successfully."
 else
     error "Build failed inside Docker."
     exit 1
@@ -56,16 +52,17 @@ else
 fi
 
 header "Launching QEMU"
-# Ensure debug log directory exists
 mkdir -p debug_log
 
-# Launch QEMU
+echo -e "${CYAN}--------------------------------------------------${NC}"
+echo -e "${CYAN}                QEMU Monitor Start                ${NC}"
+echo -e "${CYAN}--------------------------------------------------${NC}"
+
 qemu-system-x86_64 \
     -cdrom "$ISO_PATH" \
     -serial file:debug_log/.debug_log.txt \
     -monitor stdio
 
-# On QEMU exit
 clear
 success "QEMU session ended."
 
