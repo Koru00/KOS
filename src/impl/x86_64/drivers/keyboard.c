@@ -127,7 +127,7 @@ static int index_listener_realese = 0;
 
 int extended;
 
-int add_keyboard_listener(key_pressed_fn a_listener)
+void add_keyboard_listener(key_pressed_fn a_listener)
 {
     if (index_listener >= MAX_LISTENER)
     {
@@ -137,7 +137,7 @@ int add_keyboard_listener(key_pressed_fn a_listener)
     _listener[index_listener++] = a_listener;
     return 0;
 }
-int add_keyboard_realese_listener(key_realesed_fn a_listener)
+void add_keyboard_realese_listener(key_realesed_fn a_listener)
 {
     if (index_listener_realese >= MAX_LISTENER)
     {
@@ -212,6 +212,6 @@ void handle_key(keycode_t key)
 //    log_message(__PRETTY_FUNCTION__, "key pressed");
 }
 
-int key_pressed(const keycode_t Key)
+void key_pressed(const keycode_t Key)
 {
 }

@@ -13,7 +13,7 @@ int pos_col = 0;
 // It say if the cursor can move
 int cursor_move = 1;
 
-int cursor_kbd_listener(const keycode_t Key)
+void cursor_kbd_listener(const keycode_t Key)
 {
     switch (Key)
     {
@@ -37,8 +37,7 @@ int cursor_kbd_listener(const keycode_t Key)
 
 void init_cursor()
 {
-    int res;
-    res = add_keyboard_listener(cursor_kbd_listener);
+    add_keyboard_listener(cursor_kbd_listener);
 }
 
 void update_cursor(int row, int col)

@@ -168,7 +168,7 @@ void shift(keycode_t Key)
 
 keycode_t key;
 
-int input_kbd_listener(const keycode_t Key)
+void input_kbd_listener(const keycode_t Key)
 {
     key = Key;
     caps_lock(Key);
@@ -188,16 +188,15 @@ void kb_print(int state)
   printing = state;
 }
 
-int input_kbd_listener_realesed(const keycode_t Key)
+void input_kbd_listener_realesed(const keycode_t Key)
 {
     shift(Key);
 }
 
 void init_input()
 {
-    int res;
-    res = add_keyboard_listener(input_kbd_listener);
-    res = add_keyboard_realese_listener(input_kbd_listener_realesed);
+    add_keyboard_listener(input_kbd_listener);
+    add_keyboard_realese_listener(input_kbd_listener_realesed);
 }
 
 void tab()

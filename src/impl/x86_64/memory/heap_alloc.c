@@ -86,8 +86,9 @@ void* realloc(void* ptr, size_t size) {
     void* new_ptr = malloc(size);
     if (!new_ptr) return NULL;
 
-    // Copy old contents to new block
-    for (size_t i = 0; i < old_block->size; i++) {
+    // Copy old contents to new block (only up to the smaller of old/new size)
+    size_t copy_size = old_block->size < size ? old_block->size : size;
+    for (size_t i = 0; i < copy_size; i++) {
         ((uint8_t*)new_ptr)[i] = ((uint8_t*)ptr)[i];
     }
 

@@ -56,7 +56,7 @@ extern void irq_remap(void);
 char extstr[100];
 
 
-int main_kbd_listener(const keycode_t Key)
+void main_kbd_listener(const keycode_t Key)
 {
     switch (Key)
     {
@@ -141,9 +141,7 @@ void kernel_main()
 
     init_cursor();
 
-    // register the keyboards listeners
-    int res;
-    res = add_keyboard_listener(main_kbd_listener);
+    add_keyboard_listener(main_kbd_listener);
     
 
     asm volatile("sti");
@@ -154,6 +152,7 @@ void kernel_main()
     kb_print(1);
     
     init_output();
+
 
     while (1)
     {
