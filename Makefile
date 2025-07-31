@@ -92,6 +92,16 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.asm
 	@echo "[AS] $<"
 	$(AS) $(ASFLAGS) $< -o $@
 
+$(ISO_ROOT)/boot/kernel.bin: $(DIST_DIR)/kernel.bin
+	@mkdir -p $(ISO_ROOT)/boot
+	@cp $(DIST_DIR)/kernel.bin $(ISO_ROOT)/boot/kernel.bin
+
+$(DIST_DIR)/$(ISO_NAME): $(ISO_ROOT)/boot/kernel.bin
+	@mkdir -p $(DIST_DIR)
+	@chmod -R 777 $(DIST_DIR)
+	@echo "[INFO] Generating ISO $(ISO_NAME)"
+	$(GRUB) /usr/lib/grub/i386-pc -o $@ $(ISO_ROOT)
+
 # =============================================================================
 # Run in QEMU
 # =============================================================================
