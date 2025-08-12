@@ -1,20 +1,21 @@
 #include "print.h"
 #include "idt.h"
-#include "../../intf/drivers/keyboard.h"
+#include "keyboard.h"
 #include "memset.h"
 #include "pit.h"
-#include "file.h"
-#include "../../intf/debug/debug.h"
+#include "filesystem.h"
+#include "debug.h"
 #include "power.h"
 #include "string.h"
-#include "../../intf/interrupts/irq.h"
-#include "../../intf/drivers/vga.h"
-#include "../../intf/drivers/cursor.h"
+#include "irq.h"
+#include "vga.h"
+#include "cursor.h"
 #include "input.h"
 #include "ports.h"
 #include "heap_alloc.h"
 #include "strcat.h"
 #include "output.h"
+#include "pic.h"
 
 #define NUM_GDT_ENTRIES 5
 
@@ -55,9 +56,10 @@ extern void irq_remap(void);
 
 char extstr[100];
 
-
-void main_kbd_listener(const keycode_t Key)
+int main_kbd_listener(const keycode_t Key)
 {
+    /*
+    * cursors shape
     switch (Key)
     {
     case KEY_0: // Block cursor (start: 0, end: 15)
@@ -85,78 +87,64 @@ void main_kbd_listener(const keycode_t Key)
         port_byte_out(0x3D4, 0x0A);
         port_byte_out(0x3D5, 0x20); // Bit 5 = 1 hides cursor
         break;
-
-    default:
+        default:
         break;
     }
+    */
+    return 0;
 }
-
 
 void kernel_main()
 {
-
     example_gdtr.limit = NUM_GDT_ENTRIES * sizeof(uint64_t) - 1;
     example_gdtr.address = (uint64_t)gdt_entries;
 
-    // null descriptor, required to be here.
+    // null descriptor, required to be here
     gdt_entries[0] = 0;
 
     uint64_t kernel_code = 0;
-    kernel_code |= 0b1011 << 8; // type of selector
-    kernel_code |= 1 << 12;     // not a system descriptor
-    kernel_code |= 0 << 13;     // DPL field = 0
-    kernel_code |= 1 << 15;     // present
-    kernel_code |= 1 << 21;     // long-mode segment
-
+    kernel_code |= 0xB << 8; // type of selector (code, executable, readable)
+    kernel_code |= 1 << 12;  // not a system descriptor
+    kernel_code |= 0 << 13;  // DPL field = 0 (kernel privilege)
+    kernel_code |= 1 << 15;  // present
+    kernel_code |= 1 << 21;  // long-mode segment
     gdt_entries[1] = kernel_code << 32;
 
     uint64_t kernel_data = 0;
-    kernel_data |= 0b0011 << 8; // type of selector
-    kernel_data |= 1 << 12;     // not a system descriptor
-    kernel_data |= 0 << 13;     // DPL field = 0
-    kernel_data |= 1 << 15;     // present
-    kernel_data |= 1 << 21;     // long-mode segment
+    kernel_data |= 0x3 << 8; // type of selector (data, writable)
+    kernel_data |= 1 << 12;  // not a system descriptor
+    kernel_data |= 0 << 13;  // DPL field = 0 (kernel privilege)
+    kernel_data |= 1 << 15;  // present
+    kernel_data |= 1 << 21;  // long-mode segment
     gdt_entries[2] = kernel_data << 32;
 
-    uint64_t user_code = kernel_code | (3 << 13);
+    uint64_t user_code = kernel_code | (3 << 13); // DPL = 3 (user privilege)
     gdt_entries[3] = user_code;
 
-    uint64_t user_data = kernel_data | (3 << 13);
+    uint64_t user_data = kernel_data | (3 << 13); // DPL = 3 (user privilege)
     gdt_entries[4] = user_data;
 
     load_gdt();
 
-    // flush_gdt( );
+    // flush_gdt();
     asm volatile("cli");
 
     init_idt();
-
     irq_remap();
-
     pic_initialize();
-
-    timer_phase(100);
-
+    timer_phase(1000);
     timer_install();
-
     init_cursor();
-
     add_keyboard_listener(main_kbd_listener);
-    
-
     asm volatile("sti");
-	
-    init_vga();
 
+    init_vga();
     init_input();
     kb_print(1);
-    
     init_output();
-
 
     while (1)
     {
         asm("hlt");
     }
 }
-

@@ -1,5 +1,7 @@
 #pragma once
 
-void tab();
+#include "keyboard.h"
+
 void init_input();
-void getch();
+void kb_print(int state);
+keycode_t getch();

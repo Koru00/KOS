@@ -137,7 +137,7 @@ void add_keyboard_listener(key_pressed_fn a_listener)
     _listener[index_listener++] = a_listener;
     return 0;
 }
-void add_keyboard_realese_listener(key_realesed_fn a_listener)
+void add_keyboard_release_listener(key_realesed_fn a_listener)
 {
     if (index_listener_realese >= MAX_LISTENER)
     {
@@ -148,19 +148,19 @@ void add_keyboard_realese_listener(key_realesed_fn a_listener)
     return 0;
 }
 
-int is_release;
-
 void keyboard_callback()
 {
+    int is_release;
+
     uint8_t scancode = port_byte_in(0x60);
     is_release = scancode & 0x80;
 
     keycode_t key_released = scancode_map[scancode & 0x7F];
 
-    handle_scancode(scancode);
+    handle_scancode(scancode, is_release);
 }
 
-void handle_scancode(uint8_t sc)
+void handle_scancode(uint8_t sc, int is_release)
 {
     keycode_t key;
 
@@ -203,15 +203,4 @@ void handle_scancode(uint8_t sc)
             }
         }
     }
-
-    // handle_key(key);
-}
-
-void handle_key(keycode_t key)
-{
-//    log_message(__PRETTY_FUNCTION__, "key pressed");
-}
-
-void key_pressed(const keycode_t Key)
-{
 }

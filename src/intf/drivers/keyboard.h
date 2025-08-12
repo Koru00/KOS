@@ -68,7 +68,6 @@ void keyboard_init();
 
 // Keyboard interrupt handler callback
 void keyboard_callback();
-void key_pressed(const keycode_t Key);
 void key_realesed(const keycode_t Key);
 
 // this is the declaration of a pointer to function which gets a key.

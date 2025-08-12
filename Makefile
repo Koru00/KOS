@@ -32,8 +32,7 @@ QEMU_RAM      := 2048
 KVM_FLAG      := -enable-kvm
 
 # Flags
-#CFLAGS        := -ffreestanding -Wall -Wextra -Wpedantic -Werror -I src/intf
-CFLAGS        := -ffreestanding -Wall -Wextra -Wpedantic  -I src/intf
+CFLAGS        := -ffreestanding -Wall -Wextra -Wpedantic -I src/intf 
 CFLAGS       += -MMD -MP             # dependency generation
 ASFLAGS       := -f elf64
 LDFLAGS       := -n -T $(LINKER_SCRIPT)
@@ -46,6 +45,7 @@ LDFLAGS       := -n -T $(LINKER_SCRIPT)
 C_SOURCES     := $(shell find $(SRC_DIR) -type f -name "*.c")
 ASM_SOURCES   := $(shell find $(SRC_DIR) -type f -name "*.asm")
 
+# Include directories for C files
 c_include_dirs := $(shell find src/intf -type d)
 c_include_flags := $(foreach dir,$(c_include_dirs),-I$(dir))
 
@@ -67,6 +67,8 @@ all: $(DIST_DIR)/$(ISO_NAME)
 # Build ISO
 # =============================================================================
 $(DIST_DIR)/$(ISO_NAME): $(DIST_DIR)/kernel.bin
+	@mkdir -p $(DIST_DIR)
+	@chmod -R 777 $(DIST_DIR)
 	@echo "[INFO] Generating ISO $(ISO_NAME)"
 	$(GRUB) /usr/lib/grub/i386-pc -o $@ $(ISO_ROOT)
 
@@ -82,7 +84,7 @@ $(DIST_DIR)/kernel.bin: $(OBJECTS)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	@echo "[CC] $<"
-	$(CC) $(CFLAGS) -I  $(c_include_flags) -c $< -o $@
+	$(CC) $(CFLAGS) $(c_include_flags) -c $< -o $@
 
 # =============================================================================
 # Assemble ASM sources
@@ -92,15 +94,12 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.asm
 	@echo "[AS] $<"
 	$(AS) $(ASFLAGS) $< -o $@
 
+# =============================================================================
+# Copy kernel binary to ISO root
+# =============================================================================
 $(ISO_ROOT)/boot/kernel.bin: $(DIST_DIR)/kernel.bin
 	@mkdir -p $(ISO_ROOT)/boot
 	@cp $(DIST_DIR)/kernel.bin $(ISO_ROOT)/boot/kernel.bin
-
-$(DIST_DIR)/$(ISO_NAME): $(ISO_ROOT)/boot/kernel.bin
-	@mkdir -p $(DIST_DIR)
-	@chmod -R 777 $(DIST_DIR)
-	@echo "[INFO] Generating ISO $(ISO_NAME)"
-	$(GRUB) /usr/lib/grub/i386-pc -o $@ $(ISO_ROOT)
 
 # =============================================================================
 # Run in QEMU
