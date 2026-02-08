@@ -16,6 +16,7 @@
 #include "strcat.h"
 #include "output.h"
 #include "pic.h"
+#include "tokenize.h"
 
 #define NUM_GDT_ENTRIES 5
 
@@ -143,8 +144,4 @@ void kernel_main()
     kb_print(1);
     init_output();
 
-    while (1)
-    {
-        asm("hlt");
-    }
 }

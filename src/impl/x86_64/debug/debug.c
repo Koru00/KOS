@@ -79,15 +79,3 @@ void serial_print(const char* str, ...)
 end:
     va_end(args);
 }
-
-void serial_square(char* str)
-{
-	serial_write('[');
-	serial_print(str);
-	serial_write(']');
-}
-
-void serial_log()
-{
-    serial_square(int_to_str(log_id++));
-}
