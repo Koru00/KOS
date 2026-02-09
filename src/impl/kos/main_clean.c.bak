@@ -1,0 +1,103 @@
+#include <stddef.h>
+#include "performance/perf_monitor.h"
+#include "performance/perf_shell.h"
+#include "debug/debug.h"
+#include "hal/hal_interface_clean.h"
+#include "hal/hal_core.h"
+
+// =============================================================================
+// KOS - Main Entry Point (Clean HAL Integration)
+// =============================================================================
+
+// Basic types
+typedef enum {
+    KOS_SUCCESS = 0,
+    KOS_ERROR_INVALID_PARAM = -1,
+    KOS_ERROR_OUT_OF_MEMORY = -2,
+    KOS_ERROR_INVALID_STATE = -3,
+    KOS_ERROR_HARDWARE = -4
+} kos_result_t;
+
+// Forward declarations
+extern kos_result_t kos_kernel_init(void);
+extern kos_result_t kos_kernel_start(void);
+extern void kos_kernel_panic(const char* message);
+
+// =============================================================================
+// Main Entry Point
+// =============================================================================
+
+void kernel_main(void) {
+    log_info("=== KOS Kernel Starting ===");
+    log_info("Version: 1.0.0");
+    log_info("Build: Clean HAL Integration");
+    
+    // Initialize performance monitoring
+    perf_init();
+    log_info("Performance monitoring initialized");
+    
+    // Initialize HAL system first
+    log_info("Initializing HAL system...");
+    hal_result_t hal_result = hal_init();
+    if (hal_result != HAL_SUCCESS) {
+        log_error("HAL initialization failed: %s", hal_get_error_string(hal_result));
+        kos_kernel_panic("HAL initialization failed");
+        return;
+    }
+    
+    log_info("HAL system initialized successfully");
+    
+    // Dump HAL information
+    hal_result_t dump_result = hal_dump_platform_info();
+    if (dump_result != HAL_SUCCESS) {
+        log_warn("Failed to dump HAL platform info");
+    }
+    
+    // Get HAL interface
+    hal_interface_t* hal_interface = hal_get_interface();
+    if (!hal_interface) {
+        log_error("Failed to get HAL interface");
+        kos_kernel_panic("HAL interface not available");
+        return;
+    }
+    
+    // Log HAL information
+    log_info("=== HAL System Information ===");
+    log_info("Architecture: %s (%d-bit)", hal_interface->arch_name, hal_interface->arch_bits);
+    log_info("Platform: %s", hal_interface->platform_info.platform_name);
+    log_info("CPU: %s %s", hal_interface->cpu_info.vendor, hal_interface->cpu_info.model);
+    log_info("Memory: %llu MB", (unsigned long long)(hal_interface->memory_info.heap_size / (1024 * 1024)));
+    
+    // Initialize kernel subsystems
+    log_info("Initializing kernel subsystems...");
+    kos_result_t kernel_result = kos_kernel_init();
+    if (kernel_result != KOS_SUCCESS) {
+        log_error("Kernel initialization failed: %d", kernel_result);
+        kos_kernel_panic("Kernel initialization failed");
+        return;
+    }
+    
+    log_info("Kernel subsystems initialized successfully");
+    
+    // Start kernel main loop
+    log_info("Starting kernel main loop...");
+    kernel_result = kos_kernel_start();
+    if (kernel_result != KOS_SUCCESS) {
+        log_error("Kernel main loop failed: %d", kernel_result);
+        kos_kernel_panic("Kernel main loop failed");
+        return;
+    }
+    
+    // Main kernel loop
+    log_info("Entering kernel main loop");
+    while (1) {
+        // Update performance monitoring
+        perf_update();
+        
+        // Check for system events
+        // TODO: Add system event handling
+        
+        // Halt until next interrupt
+        hal_cpu_halt();
+    }
+}

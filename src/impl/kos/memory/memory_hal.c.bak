@@ -1,0 +1,657 @@
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include "../utils/string.h"
+#include "hal/hal_interface.h"
+#include "hal/hal_types.h"
+#include "hal/hal_cpu.h"
+#include "hal/hal_interrupt_simple.h"
+#include "hal/hal_memory_simple.h"
+#include "hal/hal_timer_simple.h"
+#include "hal/hal_platform_simple.h"
+#include "debug/debug.h"
+
+// =============================================================================
+// KOS - HAL-based Memory Management Implementation
+// =============================================================================
+
+// Memory manager configuration
+#define KOS_HAL_HEAP_SIZE          0x1000000  // 16MB
+#define KOS_HAL_MIN_BLOCK_SIZE     64
+#define KOS_HAL_MAX_BLOCKS          1024
+#define KOS_HAL_MEMORY_POOL_COUNT   16
+
+// Memory block types
+typedef enum {
+    KOS_HAL_BLOCK_TYPE_FREE = 0,
+    KOS_HAL_BLOCK_TYPE_USED = 1,
+    KOS_HAL_BLOCK_TYPE_RESERVED = 2
+} kos_hal_block_type_t;
+
+// Enhanced memory block structure
+typedef struct kos_hal_memory_block {
+    hal_virt_addr_t start;
+    hal_virt_addr_t end;
+    hal_size_t size;
+    kos_hal_block_type_t type;
+    hal_memory_prot_t protection;
+    hal_bool_t is_mapped;
+    hal_bool_t is_reserved;
+    const char* name;
+    struct kos_hal_memory_block* next;
+    uint32_t magic;  // For corruption detection
+    uint32_t ref_count;  // Reference counting
+} kos_hal_memory_block_t;
+
+// Memory pool for small allocations
+typedef struct {
+    kos_hal_memory_block_t* free_list;
+    hal_size_t block_size;
+    uint32_t free_count;
+    uint32_t total_count;
+} kos_hal_memory_pool_t;
+
+// Memory manager structure
+typedef struct {
+    kos_hal_memory_block_t* blocks;
+    kos_hal_memory_pool_t pools[KOS_HAL_MEMORY_POOL_COUNT];
+    hal_virt_addr_t heap_start;
+    hal_size_t heap_size;
+    hal_size_t total_allocated;
+    hal_size_t total_free;
+    uint32_t total_blocks;
+    uint32_t free_blocks;
+    hal_size_t fragmentation_count;
+    hal_bool_t initialized;
+    hal_memory_info_t info;
+    hal_memory_stats_t stats;
+} kos_hal_memory_manager_t;
+
+// Global HAL-based memory manager
+kos_hal_memory_manager_t g_hal_memory_manager;
+
+// Memory pool sizes (power of 2)
+static const hal_size_t g_pool_sizes[KOS_HAL_MEMORY_POOL_COUNT] = {
+    64,    // 2^6
+    128,   // 2^7
+    256,   // 2^8
+    512,   // 2^9
+    1024,  // 2^10
+    2048,  // 2^11
+    4096   // 2^12
+    8192   // 2^13
+    16384  // 2^14
+};
+
+// Magic number for corruption detection
+#define KOS_HAL_MEMORY_MAGIC 0xDEADBEEF
+
+// Forward declarations
+static hal_result_t kos_hal_memory_defragment(kos_hal_memory_manager_t* manager);
+static hal_result_t kos_hal_memory_coalesce_blocks(kos_hal_memory_manager_t* manager);
+static hal_result_t kos_hal_memory_validate_heap(kos_hal_memory_manager_t* manager);
+static void kos_hal_memory_dump_block(kos_hal_memory_block_t* block);
+static hal_result_t kos_hal_memory_get_pool_info(kos_hal_memory_manager_t* manager, uint32_t pool_index, hal_size_t* total_size, hal_size_t* free_size, uint32_t* total_count, uint32_t* free_count);
+
+// Initialize memory pools
+static hal_result_t kos_hal_memory_init_pools(kos_hal_memory_manager_t* manager) {
+    for (uint32_t i = 0; i < KOS_HAL_MEMORY_POOL_COUNT; i++) {
+        manager->pools[i].block_size = g_pool_sizes[i];
+        manager->pools[i].free_list = NULL;
+        manager->pools[i].free_count = 0;
+        manager->pools[i].total_count = 0;
+        
+        // Pre-allocate blocks for each pool
+        hal_virt_addr_t pool_start = (hal_virt_addr_t)((uintptr_t)manager->heap_start + 
+            (i * KOS_HAL_MAX_BLOCKS * 64)); // 64KB per pool
+            
+        for (uint32_t j = 0; j < KOS_HAL_MAX_BLOCKS; j++) {
+            kos_hal_memory_block_t* block = (kos_hal_memory_block_t*)hal_memory_alloc(g_pool_sizes[i]);
+            if (!block) {
+                log_error("Failed to pre-allocate pool %d block %d", i, j);
+                return HAL_ERROR_OUT_OF_MEMORY;
+            }
+            
+            block->start = pool_start + (j * g_pool_sizes[i]);
+            block->end = block->start + g_pool_sizes[i];
+            block->size = g_pool_sizes[i];
+            block->type = KOS_HAL_BLOCK_TYPE_RESERVED;
+            block->protection = HAL_MEM_PROT_READ_WRITE;
+            block->is_mapped = false;
+            block->is_reserved = true;
+            block->name = "Pool";
+            block->magic = KOS_HAL_MEMORY_MAGIC;
+            block->ref_count = 0;
+            
+            // Add to pool free list
+            block->next = manager->pools[i].free_list;
+            manager->pools[i].free_list = block;
+            manager->pools[i].free_count++;
+            manager->pools[i].total_count++;
+        }
+        
+        log_debug("Initialized memory pool %d: %d blocks, %d bytes", i, KOS_HAL_MAX_BLOCKS, g_pool_sizes[i]);
+    }
+    
+    return HAL_SUCCESS;
+}
+
+// Find best-fit block
+static kos_hal_memory_block_t* kos_hal_memory_find_best_fit(kos_hal_memory_manager_t* manager, hal_size_t size) {
+    kos_hal_memory_block_t* best_block = NULL;
+    hal_size_t best_size = 0;
+    
+    // Search in all pools
+    for (uint32_t i = 0; i < KOS_HAL_MEMORY_POOL_COUNT; i++) {
+        kos_hal_memory_block_t* current = manager->pools[i].free_list;
+        
+        while (current) {
+            if (current->type == KOS_HAL_BLOCK_TYPE_FREE && current->size >= size) {
+                if (!best_block || current->size < best_size) {
+                    best_block = current;
+                    best_size = current->size;
+                }
+            }
+            current = current->next;
+        }
+    }
+    
+    return best_block;
+}
+
+// Split block if too large
+static hal_result_t kos_hal_memory_split_block(kos_hal_memory_block_t* block, hal_size_t size) {
+    if (block->size <= size + sizeof(kos_hal_memory_block_t) + 8) {
+        return HAL_ERROR_INVALID_PARAM;  // Too small to split
+    }
+    
+    hal_size_t remaining_size = block->size - size;
+    kos_hal_memory_block_t* new_block = (kos_hal_memory_block_t*)((u8*)block + sizeof(kos_hal_memory_block_t));
+    
+    new_block->start = block->start + size;
+    new_block->end = block->end;
+    new_block->size = remaining_size;
+    new_block->type = block->type;
+    new_block->protection = block->protection;
+    new_block->is_mapped = block->is_mapped;
+    new_block->is_reserved = block->is_reserved;
+    new_block->name = block->name;
+    new_block->magic = KOS_HAL_MEMORY_MAGIC;
+    new_block->ref_count = 0;
+    
+    // Insert new block after current block
+    new_block->next = block->next;
+    block->next = new_block;
+    
+    log_debug("Split block %p: %llu bytes -> %p + %llu bytes, %p + %llu bytes",
+             block, (uintptr_t)block->start, (uintptr_t)block->start + size,
+             new_block, (uintptr_t)new_block->start, (uintptr_t)new_block->start + remaining_size);
+    
+    return HAL_SUCCESS;
+}
+
+// Initialize HAL-based memory manager
+hal_result_t kos_hal_memory_init(void) {
+    if (g_hal_memory_manager.initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("Initializing HAL-based memory manager");
+    
+    // Initialize HAL first
+    hal_result_t hal_result = hal_memory_init();
+    if (hal_result != HAL_SUCCESS) {
+        log_error("Failed to initialize HAL memory system: %d", hal_result);
+        return HAL_ERROR_HARDWARE;
+    }
+    
+    // Initialize memory manager structure
+    kos_memset(&g_hal_memory_manager, 0, sizeof(kos_hal_memory_manager_t));
+    
+    // Get memory info from HAL
+    hal_result = hal_memory_get_info(&g_hal_memory_manager.info);
+    if (hal_result != HAL_SUCCESS) {
+        log_error("Failed to get HAL memory info: %d", hal_result);
+        return HAL_ERROR_HARDWARE;
+    }
+    
+    g_hal_memory_manager.heap_start = g_hal_memory_manager.info.heap_base;
+    g_hal_memory_manager.heap_size = g_hal_memory_manager.info.heap_size;
+    
+    // Initialize memory pools
+    hal_result = kos_hal_memory_init_pools(&g_hal_memory_manager);
+    if (hal_result != HAL_SUCCESS) {
+        return hal_result;
+    }
+    
+    // Initialize statistics
+    g_hal_memory_manager.total_allocated = 0;
+    g_hal_memory_manager.total_free = g_hal_memory_manager.heap_size;
+    g_hal_memory_manager.total_blocks = 0;
+    g_hal_memory_manager.free_blocks = 0;
+    g_hal_memory_manager.fragmentation_count = 0;
+    
+    g_hal_memory_manager.initialized = true;
+    
+    log_info("HAL-based memory manager initialized:");
+    log_info("  Heap: %p - %llu bytes", g_hal_memory_manager.heap_start, (uintptr_t)g_hal_memory_manager.heap_size);
+    log_info("  Total blocks: %u", g_hal_memory_manager.total_blocks);
+    log_info("  Free blocks: %u", g_hal_memory_manager.free_blocks);
+    
+    return HAL_SUCCESS;
+}
+
+// Allocate memory using HAL
+void* kos_hal_memory_alloc(hal_size_t size) {
+    if (!g_hal_memory_manager.initialized) {
+        log_error("HAL memory manager not initialized");
+        return NULL;
+    }
+    
+    if (size == 0) {
+        return NULL;
+    }
+    
+    // Align size to 8-byte boundary
+    hal_size_t aligned_size = (size + 7) & ~7ULL;
+    
+    // Find best-fit block
+    kos_hal_memory_block_t* block = kos_hal_memory_find_best_fit(&g_hal_memory_manager, aligned_size);
+    if (!block) {
+        log_error("Out of memory: requested %llu bytes", (uintptr_t)aligned_size);
+        return NULL;
+    }
+    
+    // Check if block is large enough to split
+    if (block->size > aligned_size + sizeof(kos_hal_memory_block_t) + 8) {
+        log_error("Block too large to split: %llu bytes", (uintptr_t)block->size);
+        return NULL;
+    }
+    
+    // Mark block as used
+    block->type = KOS_HAL_BLOCK_TYPE_USED;
+    block->ref_count++;
+    
+    // Update statistics
+    g_hal_memory_manager.total_allocated += aligned_size;
+    g_hal_memory_manager.total_free -= aligned_size;
+    g_hal_memory_manager.free_blocks--;
+    
+    // Check for fragmentation
+    if (block->next) {
+        g_hal_memory_manager.fragmentation_count++;
+    }
+    
+    log_debug("Allocated %llu bytes from block %p", (uintptr_t)aligned_size, block->start);
+    
+    return (void*)block->start;
+}
+
+// Free memory using HAL
+void kos_hal_memory_free(void* ptr) {
+    if (!g_hal_memory_manager.initialized || !ptr) {
+        return;
+    }
+    
+    // Find block containing pointer
+    kos_hal_memory_block_t* block = NULL;
+    kos_hal_memory_block_t* prev = NULL;
+    
+    // Search in all pools
+    for (uint32_t i = 0; i < KOS_HAL_MEMORY_POOL_COUNT; i++) {
+        kos_hal_memory_block_t* current = g_hal_memory_manager.pools[i].free_list;
+        
+        while (current) {
+            if ((void*)current <= ptr && (void*)current + current->size > ptr) {
+                block = current;
+                break;
+            }
+            prev = current;
+            current = current->next;
+        }
+        
+        if (block) {
+            break;
+        }
+    }
+    
+    if (!block) {
+        log_warn("Attempting to free invalid pointer: %p", ptr);
+        return;
+    }
+    
+    // Validate block
+    if (block->magic != KOS_HAL_MEMORY_MAGIC) {
+        log_error("Memory corruption detected in block %p", block);
+        return;
+    }
+    
+    if (block->type != KOS_HAL_BLOCK_TYPE_USED) {
+        log_warn("Attempting to free unused block: %p", block);
+        return;
+    }
+    
+    // Decrease reference count
+    if (block->ref_count == 0) {
+        log_warn("Double free detected for block %p", block);
+        return;
+    }
+    block->ref_count--;
+    
+    // Mark as free and coalesce
+    block->type = KOS_HAL_BLOCK_TYPE_FREE;
+    g_hal_memory_manager.total_allocated -= block->size;
+    g_hal_memory_manager.total_free += block->size;
+    g_hal_memory_manager.free_blocks++;
+    
+    // Coalesce with adjacent free blocks
+    kos_hal_memory_coalesce_blocks(&g_hal_memory_manager);
+    
+    log_debug("Freed %llu bytes from block %p", (uintptr_t)block->size, block->start);
+}
+
+// Reallocate memory using HAL
+void* kos_hal_memory_realloc(void* ptr, hal_size_t new_size) {
+    if (!g_hal_memory_manager.initialized || !ptr) {
+        return NULL;
+    }
+    
+    if (new_size == 0) {
+        kos_hal_memory_free(ptr);
+        return NULL;
+    }
+    
+    // Find current block
+    kos_hal_memory_block_t* block = NULL;
+    kos_hal_memory_block_t* prev = NULL;
+    
+    // Search in all pools
+    for (uint32_t i = 0; i < KOS_HAL_MEMORY_POOL_COUNT; i++) {
+        kos_hal_memory_block_t* current = g_hal_memory_manager.pools[i].free_list;
+        
+        while (current) {
+            if ((void*)current <= ptr && (void*)current + current->size > ptr) {
+                block = current;
+                break;
+            }
+            prev = current;
+            current = current->next;
+        }
+        
+        if (block) {
+            break;
+        }
+    }
+    
+    if (!block) {
+        log_error("Invalid pointer in realloc: %p", ptr);
+        return NULL;
+    }
+    
+    // Validate block
+    if (block->magic != KOS_HAL_MEMORY_MAGIC) {
+        log_error("Memory corruption detected in realloc: %p", block);
+        return NULL;
+    }
+    
+    if (block->type != KOS_HAL_BLOCK_TYPE_USED) {
+        log_error("Invalid block in realloc: %p", block);
+        return NULL;
+    }
+    
+    hal_size_t old_size = block->size;
+    hal_size_t aligned_new_size = (new_size + 7) & ~7ULL;
+    
+    // Check if new size fits in current block
+    if (aligned_new_size <= old_size) {
+        block->ref_count++;
+        return (void*)block->start;  // Return same pointer
+    }
+    
+    // Check if we can expand the block
+    if (block->next && block->next->type == KOS_HAL_BLOCK_TYPE_FREE && 
+        block->size + aligned_new_size <= old_size + block->next->size) {
+        
+        // Expand block to include new size
+        block->size += aligned_new_size;
+        block->ref_count++;
+        
+        g_hal_memory_manager.total_allocated += aligned_new_size;
+        g_hal_memory_manager.total_free -= aligned_new_size;
+        
+        log_debug("Expanded block %p to %llu bytes", block->start, (uintptr_t)block->size);
+        return (void*)block->start;
+    }
+    
+    // Allocate new block and copy data
+    void* new_ptr = kos_hal_memory_alloc(new_size);
+    if (!new_ptr) {
+        log_error("Failed to allocate %llu bytes for realloc", (uintptr_t)aligned_new_size);
+        return NULL;
+    }
+    
+    // Copy old data to new block
+    kos_memcpy(new_ptr, ptr, old_size);
+    
+    // Free old block
+    block->type = KOS_HAL_BLOCK_TYPE_FREE;
+    g_hal_memory_manager.total_allocated -= old_size;
+    g_hal_memory_manager.total_free += old_size;
+    g_hal_memory_manager.free_blocks++;
+    
+    // Coalesce old block with next
+    kos_hal_memory_coalesce_blocks(&g_hal_memory_manager);
+    
+    log_debug("Reallocated %p -> %p (%llu -> %llu bytes)", 
+             ptr, new_ptr, (uintptr_t)old_size, (uintptr_t)new_size);
+    
+    return new_ptr;
+}
+
+// Callocate memory using HAL
+void* kos_hal_memory_calloc(hal_size_t count, hal_size_t size) {
+    hal_size_t total_size = count * size;
+    
+    if (total_size == 0) {
+        return NULL;
+    }
+    
+    // Check for overflow
+    if (total_size / size != count) {
+        log_error("Integer overflow in calloc");
+        return NULL;
+    }
+    
+    void* ptr = kos_hal_memory_alloc(total_size);
+    if (ptr) {
+        kos_memset(ptr, 0, total_size);
+    }
+    
+    return ptr;
+}
+
+// Get memory statistics
+hal_result_t kos_hal_memory_get_stats(hal_memory_stats_t* stats) {
+    if (!g_hal_memory_manager.initialized || !stats) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    // Get HAL memory statistics
+    hal_result_t hal_result = hal_memory_get_stats(&g_hal_memory_manager.stats);
+    if (hal_result != HAL_SUCCESS) {
+        log_error("Failed to get HAL memory stats: %d", hal_result);
+        return HAL_ERROR_HARDWARE;
+    }
+    
+    // Copy HAL stats
+    *stats = g_hal_memory_manager.stats;
+    
+    // Add KOS-specific statistics
+    stats->total_blocks = g_hal_memory_manager.total_blocks;
+    stats->free_blocks = g_hal_memory_manager.free_blocks;
+    stats->fragmentation_count = g_hal_memory_manager.fragmentation_count;
+    
+    return HAL_SUCCESS;
+}
+
+// Get memory information
+hal_result_t kos_hal_memory_get_info(hal_memory_info_t* info) {
+    if (!g_hal_memory_manager.initialized || !info) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    // Get HAL memory info
+    hal_result_t hal_result = hal_memory_get_info(info);
+    if (hal_result != HAL_SUCCESS) {
+        log_error("Failed to get HAL memory info: %d", hal_result);
+        return HAL_ERROR_HARDWARE;
+    }
+    
+    // Add KOS-specific information
+    info->total_blocks = g_hal_memory_manager.total_blocks;
+    info->free_blocks = g_hal_memory_manager.free_blocks;
+    info->fragmentation_count = g_hal_memory_manager.fragmentation_count;
+    
+    return HAL_SUCCESS;
+}
+
+// Reset memory statistics
+hal_result_t kos_hal_memory_reset_stats(void) {
+    if (!g_hal_memory_manager.initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    // Reset HAL memory statistics
+    hal_result_t hal_result = hal_memory_reset_stats();
+    if (hal_result != HAL_SUCCESS) {
+        log_error("Failed to reset HAL memory stats: %d", hal_result);
+        return HAL_ERROR_HARDWARE;
+    }
+    
+    // Reset KOS-specific statistics
+    g_hal_memory_manager.fragmentation_count = 0;
+    
+    log_info("HAL-based memory statistics reset");
+    return HAL_SUCCESS;
+}
+
+// Dump memory statistics
+hal_result_t kos_hal_memory_dump_stats(void) {
+    if (!g_hal_memory_manager.initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("=== HAL-based Memory Statistics ===");
+    log_info("Total allocated: %llu bytes", g_hal_memory_manager.total_allocated);
+    log_info("Total free: %llu bytes", g_hal_memory_manager.total_free);
+    log_info("Total blocks: %u", g_hal_memory_manager.total_blocks);
+    log_info("Free blocks: %u", g_hal_memory_manager.free_blocks);
+    log_info("Fragmentation count: %u", g_hal_memory_manager.fragmentation_count);
+    
+    // Dump pool information
+    for (uint32_t i = 0; i < KOS_HAL_MEMORY_POOL_COUNT; i++) {
+        log_info("Pool %d (%d bytes): %u blocks, %u free", 
+                 i, g_pool_sizes[i], g_hal_memory_manager.pools[i].total_count, g_hal_memory_manager.pools[i].free_count);
+    }
+    
+    // Dump block information
+    uint32_t block_count = 0;
+    kos_hal_memory_block_t* current = g_hal_memory_manager.blocks;
+    
+    while (current && block_count < 10) {  // Limit output to first 10 blocks
+        if (current->type == KOS_HAL_BLOCK_TYPE_USED) {
+            log_info("Block %d: %p-%p (%llu bytes) - %s", 
+                     block_count, current->start, current->end, 
+                     (uintptr_t)current->size, current->name);
+            block_count++;
+        }
+        current = current->next;
+    }
+    
+    if (block_count >= 10) {
+        log_info("... (%d more blocks)", g_hal_memory_manager.total_blocks - block_count);
+    }
+    
+    return HAL_SUCCESS;
+}
+
+// Validate heap integrity
+static hal_result_t kos_hal_memory_validate_heap(kos_hal_memory_manager_t* manager) {
+    uint32_t corruption_count = 0;
+    uint32_t block_count = 0;
+    
+    kos_hal_memory_block_t* current = manager->blocks;
+    while (current) {
+        block_count++;
+        
+        // Check magic number
+        if (current->magic != KOS_HAL_MEMORY_MAGIC) {
+            log_error("Memory corruption detected in block %p", current->start);
+            corruption_count++;
+        }
+        
+        // Check for invalid pointers
+        if (current->start < manager->heap_start || 
+            current->end > manager->heap_start + manager->heap_size ||
+            current->next && (uintptr_t)current->next < (uintptr_t)manager->heap_start ||
+            (uintptr_t)current->next >= (uintptr_t)manager->heap_start + manager->heap_size)) {
+            log_error("Invalid block pointer detected: %p", current->start);
+            corruption_count++;
+        }
+        
+        current = current->next;
+    }
+    
+    if (corruption_count > 0) {
+        log_error("Memory corruption detected: %d corrupted blocks", corruption_count);
+        return HAL_ERROR_HARDWARE;
+    }
+    
+    if (block_count != manager->total_blocks) {
+        log_error("Block count mismatch: expected %u, found %u", manager->total_blocks, block_count);
+        return HAL_ERROR_HARDWARE;
+    }
+    
+    return HAL_SUCCESS;
+}
+
+// Defragment memory
+static hal_result_t kos_hal_memory_defragment(kos_hal_memory_manager_t* manager) {
+    log_info("Starting memory defragmentation...");
+    
+    uint32_t moved_blocks = 0;
+    uint32_t freed_blocks = 0;
+    
+    // Coalesce all adjacent free blocks
+    for (uint32_t i = 0; i < KOS_HAL_MEMORY_POOL_COUNT; i++) {
+        kos_hal_memory_block_t* current = manager->pools[i].free_list;
+        
+        while (current && current->next) {
+            kos_hal_memory_block_t* next = current->next;
+            
+            if (next->type == KOS_HAL_BLOCK_TYPE_FREE && 
+                (uintptr_t)current->end == (uintptr_t)next->start) {
+                
+                // Merge blocks
+                current->size += next->size;
+                current->end = next->end;
+                current->ref_count += next->ref_count;
+                
+                // Remove merged block
+                manager->pools[i].free_list = next;
+                freed_blocks++;
+                moved_blocks++;
+                
+                log_debug("Merged blocks %p + %p", current->start, next->start);
+            }
+            
+            current = next;
+        }
+    }
+    
+    manager->fragmentation_count = 0;
+    
+    log_info("Defragmentation completed: %u blocks merged, %u blocks freed", moved_blocks, freed_blocks);
+    
+    return HAL_SUCCESS;
+}

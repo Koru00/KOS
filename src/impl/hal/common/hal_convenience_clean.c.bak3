@@ -1,0 +1,765 @@
+#include "hal/hal_interface_clean.h"
+#include "debug/debug.h"
+
+// =============================================================================
+// KOS - HAL Convenience Functions (Clean Version)
+// =============================================================================
+
+// =============================================================================
+// CPU Convenience Functions
+// =============================================================================
+
+hal_result_t hal_cpu_init(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->init) {
+        return interface->cpu_ops->init();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_shutdown(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->shutdown) {
+        return interface->cpu_ops->shutdown();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_reset(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->reset) {
+        return interface->cpu_ops->reset();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_get_info(hal_cpu_info_t* info) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops || !info) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->cpu_ops->get_info) {
+        return interface->cpu_ops->get_info(info);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_get_stats(hal_cpu_stats_t* stats) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops || !stats) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->cpu_ops->get_stats) {
+        return interface->cpu_ops->get_stats(stats);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_reset_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->reset_stats) {
+        return interface->cpu_ops->reset_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_dump_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->dump_stats) {
+        return interface->cpu_ops->dump_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_enable(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->enable) {
+        return interface->cpu_ops->enable();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_disable(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->disable) {
+        return interface->cpu_ops->disable();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_halt(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->cpu_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->cpu_ops->halt) {
+        return interface->cpu_ops->halt();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// =============================================================================
+// Memory Convenience Functions
+// =============================================================================
+
+hal_result_t hal_memory_init(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->memory_ops->init) {
+        return interface->memory_ops->init();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+void* hal_memory_alloc(hal_size_t size) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return NULL;
+    }
+    
+    if (interface->memory_ops->alloc) {
+        return interface->memory_ops->alloc(size);
+    }
+    
+    return NULL;
+}
+
+hal_result_t hal_memory_shutdown(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->memory_ops->shutdown) {
+        return interface->memory_ops->shutdown();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_reset(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->memory_ops->reset) {
+        return interface->memory_ops->reset();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+void* hal_memory_realloc(void* ptr, hal_size_t new_size) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return NULL;
+    }
+    
+    if (interface->memory_ops->realloc) {
+        return interface->memory_ops->realloc(ptr, new_size);
+    }
+    
+    return NULL;
+}
+
+void hal_memory_free(void* ptr) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return;
+    }
+    
+    if (interface->memory_ops->free) {
+        interface->memory_ops->free(ptr);
+    }
+}
+
+void* hal_memory_calloc(hal_size_t count, hal_size_t size) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return NULL;
+    }
+    
+    if (interface->memory_ops->calloc) {
+        return interface->memory_ops->calloc(count, size);
+    }
+    
+    return NULL;
+}
+
+hal_result_t hal_memory_get_info(hal_memory_info_t* info) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops || !info) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->memory_ops->get_info) {
+        return interface->memory_ops->get_info(info);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_get_stats(hal_memory_stats_t* stats) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops || !stats) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->memory_ops->get_stats) {
+        return interface->memory_ops->get_stats(stats);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_reset_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->memory_ops->reset_stats) {
+        return interface->memory_ops->reset_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_dump_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->memory_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->memory_ops->dump_stats) {
+        return interface->memory_ops->dump_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// =============================================================================
+// Interrupt Convenience Functions
+// =============================================================================
+
+hal_result_t hal_interrupt_init(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->init) {
+        return interface->interrupt_ops->init();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_shutdown(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->shutdown) {
+        return interface->interrupt_ops->shutdown();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_reset(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->reset) {
+        return interface->interrupt_ops->reset();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_enable(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->enable) {
+        return interface->interrupt_ops->enable();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_disable(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->disable) {
+        return interface->interrupt_ops->disable();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_enable_irq(hal_u32_t irq) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->enable_irq) {
+        return interface->interrupt_ops->enable_irq(irq);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_disable_irq(hal_u32_t irq) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->disable_irq) {
+        return interface->interrupt_ops->disable_irq(irq);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_mask_irq(hal_u32_t irq) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->mask_irq) {
+        return interface->interrupt_ops->mask_irq(irq);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_unmask_irq(hal_u32_t irq) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->unmask_irq) {
+        return interface->interrupt_ops->unmask_irq(irq);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_register_handler(hal_u32_t vector, hal_interrupt_handler_t handler) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->register_handler) {
+        return interface->interrupt_ops->register_handler(vector, handler);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_unregister_handler(hal_u32_t vector) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->unregister_handler) {
+        return interface->interrupt_ops->unregister_handler(vector);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_enable_handler(hal_u32_t vector) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->enable_handler) {
+        return interface->interrupt_ops->enable_handler(vector);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_disable_handler(hal_u32_t vector) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->disable_handler) {
+        return interface->interrupt_ops->disable_handler(vector);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_set_priority(hal_u32_t vector, hal_u8_t priority) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->set_priority) {
+        return interface->interrupt_ops->set_priority(vector, priority);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_get_priority(hal_u32_t vector, hal_u8_t* priority) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops || !priority) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->interrupt_ops->get_priority) {
+        return interface->interrupt_ops->get_priority(vector, priority);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_get_info(hal_interrupt_info_t* info) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops || !info) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->interrupt_ops->get_info) {
+        return interface->interrupt_ops->get_info(info);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_get_stats(hal_interrupt_stats_t* stats) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops || !stats) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->interrupt_ops->get_stats) {
+        return interface->interrupt_ops->get_stats(stats);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_reset_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->reset_stats) {
+        return interface->interrupt_ops->reset_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_dump_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->interrupt_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->interrupt_ops->dump_stats) {
+        return interface->interrupt_ops->dump_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// =============================================================================
+// Timer Convenience Functions
+// =============================================================================
+
+hal_result_t hal_timer_init(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->timer_ops->init) {
+        return interface->timer_ops->init();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_shutdown(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->timer_ops->shutdown) {
+        return interface->timer_ops->shutdown();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_reset(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->timer_ops->reset) {
+        return interface->timer_ops->reset();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_timestamp(hal_timestamp_t* timestamp) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops || !timestamp) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->timer_ops->get_timestamp) {
+        return interface->timer_ops->get_timestamp(timestamp);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_cycle_count(hal_u64_t* count) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops || !count) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->timer_ops->get_cycle_count) {
+        return interface->timer_ops->get_cycle_count(count);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_tsc_frequency(hal_frequency_t* frequency) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops || !frequency) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->timer_ops->get_tsc_frequency) {
+        return interface->timer_ops->get_tsc_frequency(frequency);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_delay(hal_u32_t milliseconds) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->timer_ops->delay) {
+        return interface->timer_ops->delay(milliseconds);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_stats(hal_timer_stats_t* stats) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops || !stats) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->timer_ops->get_stats) {
+        return interface->timer_ops->get_stats(stats);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_reset_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->timer_ops->reset_stats) {
+        return interface->timer_ops->reset_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_dump_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->timer_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->timer_ops->dump_stats) {
+        return interface->timer_ops->dump_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// =============================================================================
+// Platform Convenience Functions
+// =============================================================================
+
+hal_result_t hal_platform_init(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->platform_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->platform_ops->init) {
+        return interface->platform_ops->init();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_shutdown(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->platform_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->platform_ops->shutdown) {
+        return interface->platform_ops->shutdown();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_reset(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->platform_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->platform_ops->reset) {
+        return interface->platform_ops->reset();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_get_info(hal_platform_info_t* info) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->platform_ops || !info) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->platform_ops->get_info) {
+        return interface->platform_ops->get_info(info);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_get_stats(hal_platform_stats_t* stats) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->platform_ops || !stats) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (interface->platform_ops->get_stats) {
+        return interface->platform_ops->get_stats(stats);
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_reset_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->platform_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->platform_ops->reset_stats) {
+        return interface->platform_ops->reset_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_dump_stats(void) {
+    hal_interface_t* interface = hal_get_interface();
+    if (!interface || !interface->platform_ops) {
+        return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    if (interface->platform_ops->dump_stats) {
+        return interface->platform_ops->dump_stats();
+    }
+    
+    return HAL_ERROR_NOT_SUPPORTED;
+}

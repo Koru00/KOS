@@ -1,0 +1,389 @@
+#include "hal/hal_interface.h"
+#include "hal/hal_types.h"
+#include "kos/utils/string.h"
+#include "debug/debug.h"
+
+// =============================================================================
+// KOS - HAL Convenience Functions Implementation
+// =============================================================================
+
+// External declarations from hal_common.c
+extern hal_interface_t g_hal_interface;
+extern bool g_hal_initialized;
+
+// CPU convenience functions
+hal_result_t hal_cpu_init(void) {
+    if (g_hal_initialized && g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->init) {
+        return g_hal_interface.cpu_ops->init();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_shutdown(void) {
+    if (g_hal_initialized && g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->shutdown) {
+        return g_hal_interface.cpu_ops->shutdown();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_reset(void) {
+    if (g_hal_initialized && g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->reset) {
+        return g_hal_interface.cpu_ops->reset();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_get_info(hal_cpu_info_t* info) {
+    if (g_hal_initialized && g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->get_info) {
+        return g_hal_interface.cpu_ops->get_info(info);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_get_stats(hal_cpu_stats_t* stats) {
+    if (g_hal_initialized && g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->get_stats) {
+        return g_hal_interface.cpu_ops->get_stats(stats);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_reset_stats(void) {
+    if (g_hal_initialized && g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->reset_stats) {
+        return g_hal_interface.cpu_ops->reset_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_cpu_dump_stats(void) {
+    if (g_hal_initialized && g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->dump_stats) {
+        return g_hal_interface.cpu_ops->dump_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// Memory convenience functions
+hal_result_t hal_memory_init(void) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->init) {
+        return g_hal_interface.memory_ops->init();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+void* hal_memory_alloc(hal_size_t size) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->alloc) {
+        return g_hal_interface.memory_ops->alloc(size);
+    }
+    return NULL;
+}
+
+hal_result_t hal_memory_shutdown(void) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->shutdown) {
+        return g_hal_interface.memory_ops->shutdown();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_reset(void) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->reset) {
+        return g_hal_interface.memory_ops->reset();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+void* hal_memory_realloc(void* ptr, hal_size_t new_size) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->realloc) {
+        return g_hal_interface.memory_ops->realloc(ptr, new_size);
+    }
+    return NULL;
+}
+
+void hal_memory_free(void* ptr) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->free) {
+        g_hal_interface.memory_ops->free(ptr);
+    }
+}
+
+void* hal_memory_calloc(hal_size_t count, hal_size_t size) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->calloc) {
+        return g_hal_interface.memory_ops->calloc(count, size);
+    }
+    return NULL;
+}
+
+hal_result_t hal_memory_map_physical(hal_phys_addr_t phys_addr, hal_size_t size, hal_virt_addr_t* virt_addr) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->map_physical) {
+        return g_hal_interface.memory_ops->map_physical(phys_addr, size, virt_addr);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_unmap(hal_virt_addr_t virt_addr, hal_size_t size) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->unmap) {
+        return g_hal_interface.memory_ops->unmap(virt_addr, size);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_protect(hal_virt_addr_t addr, hal_size_t size, hal_memory_prot_t protection) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->protect) {
+        return g_hal_interface.memory_ops->protect(addr, size, protection);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_unprotect(hal_virt_addr_t addr, hal_size_t size) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->unprotect) {
+        return g_hal_interface.memory_ops->unprotect(addr, size);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_get_info(hal_memory_info_t* info) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->get_info) {
+        return g_hal_interface.memory_ops->get_info(info);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_get_stats(hal_memory_stats_t* stats) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->get_stats) {
+        return g_hal_interface.memory_ops->get_stats(stats);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_reset_stats(void) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->reset_stats) {
+        return g_hal_interface.memory_ops->reset_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_memory_dump_stats(void) {
+    if (g_hal_initialized && g_hal_interface.memory_ops && g_hal_interface.memory_ops->dump_stats) {
+        return g_hal_interface.memory_ops->dump_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// Interrupt convenience functions
+hal_result_t hal_interrupt_init(void) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->init) {
+        return g_hal_interface.interrupt_ops->init();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_shutdown(void) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->shutdown) {
+        return g_hal_interface.interrupt_ops->shutdown();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_reset(void) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->reset) {
+        return g_hal_interface.interrupt_ops->reset();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_enable(void) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->enable) {
+        return g_hal_interface.interrupt_ops->enable();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_disable(void) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->disable) {
+        return g_hal_interface.interrupt_ops->disable();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_enable_irq(uint32_t irq) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->enable_irq) {
+        return g_hal_interface.interrupt_ops->enable_irq(irq);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_disable_irq(uint32_t irq) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->disable_irq) {
+        return g_hal_interface.interrupt_ops->disable_irq(irq);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_mask_irq(uint32_t irq) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->mask_irq) {
+        return g_hal_interface.interrupt_ops->mask_irq(irq);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_unmask_irq(uint32_t irq) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->unmask_irq) {
+        return g_hal_interface.interrupt_ops->unmask_irq(irq);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_get_info(hal_interrupt_info_t* info) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->get_info) {
+        return g_hal_interface.interrupt_ops->get_info(info);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_get_stats(hal_interrupt_stats_t* stats) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->get_stats) {
+        return g_hal_interface.interrupt_ops->get_stats(stats);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_reset_stats(void) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->reset_stats) {
+        return g_hal_interface.interrupt_ops->reset_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_interrupt_dump_stats(void) {
+    if (g_hal_initialized && g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->dump_stats) {
+        return g_hal_interface.interrupt_ops->dump_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// Timer convenience functions
+hal_result_t hal_timer_init(void) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->init) {
+        return g_hal_interface.timer_ops->init();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_shutdown(void) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->shutdown) {
+        return g_hal_interface.timer_ops->shutdown();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_reset(void) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->reset) {
+        return g_hal_interface.timer_ops->reset();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_timestamp(hal_timestamp_t* timestamp) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->get_timestamp) {
+        return g_hal_interface.timer_ops->get_timestamp(timestamp);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_cycle_count(hal_u64_t* count) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->get_cycle_count) {
+        return g_hal_interface.timer_ops->get_cycle_count(count);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_tsc_frequency(hal_frequency_t* frequency) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->get_tsc_frequency) {
+        return g_hal_interface.timer_ops->get_tsc_frequency(frequency);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_delay(hal_u32_t milliseconds) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->delay) {
+        return g_hal_interface.timer_ops->delay(milliseconds);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_get_stats(hal_timer_stats_t* stats) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->get_stats) {
+        return g_hal_interface.timer_ops->get_stats(stats);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_reset_stats(void) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->reset_stats) {
+        return g_hal_interface.timer_ops->reset_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_timer_dump_stats(void) {
+    if (g_hal_initialized && g_hal_interface.timer_ops && g_hal_interface.timer_ops->dump_stats) {
+        return g_hal_interface.timer_ops->dump_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// Platform convenience functions
+hal_result_t hal_platform_init(void) {
+    if (g_hal_initialized && g_hal_interface.platform_ops && g_hal_interface.platform_ops->init) {
+        return g_hal_interface.platform_ops->init();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_shutdown(void) {
+    if (g_hal_initialized && g_hal_interface.platform_ops && g_hal_interface.platform_ops->shutdown) {
+        return g_hal_interface.platform_ops->shutdown();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_reset(void) {
+    if (g_hal_initialized && g_hal_interface.platform_ops && g_hal_interface.platform_ops->reset) {
+        return g_hal_interface.platform_ops->reset();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_get_info(hal_platform_info_t* info) {
+    if (g_hal_initialized && g_hal_interface.platform_ops && g_hal_interface.platform_ops->get_info) {
+        return g_hal_interface.platform_ops->get_info(info);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_get_stats(hal_platform_stats_t* stats) {
+    if (g_hal_initialized && g_hal_interface.platform_ops && g_hal_interface.platform_ops->get_stats) {
+        return g_hal_interface.platform_ops->get_stats(stats);
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_reset_stats(void) {
+    if (g_hal_initialized && g_hal_interface.platform_ops && g_hal_interface.platform_ops->reset_stats) {
+        return g_hal_interface.platform_ops->reset_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+hal_result_t hal_platform_dump_stats(void) {
+    if (g_hal_initialized && g_hal_interface.platform_ops && g_hal_interface.platform_ops->dump_stats) {
+        return g_hal_interface.platform_ops->dump_stats();
+    }
+    return HAL_ERROR_NOT_SUPPORTED;
+}
+
+// Utility functions
+size_t hal_strlen(const char* str) {
+    size_t len = 0;
+    while (str[len]) {
+        len++;
+    }
+    return len;
+}

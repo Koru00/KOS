@@ -1,0 +1,523 @@
+#include "hal/hal_interface_clean.h"
+#include "hal/hal_core.h"
+#include "kos/utils/log_stubs.h"
+
+// =============================================================================
+// KOS - HAL Common Implementation (Clean Version)
+// =============================================================================
+
+// Global HAL interface instance
+static hal_interface_t g_hal_interface = {0};
+static hal_bool_t g_hal_initialized = false;
+static hal_config_t g_hal_config = {0};
+
+// Architecture-specific interface getters
+extern hal_interface_t* hal_x86_64_get_interface(void);
+extern hal_interface_t* hal_i386_get_interface(void);
+extern hal_interface_t* hal_arm64_get_interface(void);
+extern hal_interface_t* hal_riscv64_get_interface(void);
+
+// Error handler
+static hal_result_t (*g_error_handler)(hal_result_t error, const char* message) = NULL;
+
+// =============================================================================
+// HAL Initialization and Management
+// =============================================================================
+
+// Initialize HAL system
+hal_result_t hal_init(void) {
+    if (g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("Initializing HAL system v%s", HAL_VERSION_STRING);
+    
+    // Detect current architecture
+    hal_architecture_t arch = hal_get_current_architecture();
+    g_hal_interface.architecture = arch;
+    g_hal_interface.arch_bits = hal_get_architecture_bits(arch);
+    
+    // Get architecture name
+    const char* arch_name = hal_get_architecture_name(arch);
+    hal_strncpy(g_hal_interface.arch_name, arch_name, sizeof(g_hal_interface.arch_name) - 1);
+    g_hal_interface.arch_name[sizeof(g_hal_interface.arch_name) - 1] = '\0';
+    
+    // Get architecture-specific interface
+    switch (arch) {
+        case HAL_ARCH_X86_64:
+            g_hal_interface = *hal_x86_64_get_interface();
+            break;
+        case HAL_ARCH_I386:
+            g_hal_interface = *hal_i386_get_interface();
+            break;
+        case HAL_ARCH_ARM64:
+            g_hal_interface = *hal_arm64_get_interface();
+            break;
+        case HAL_ARCH_RISCV64:
+            g_hal_interface = *hal_riscv64_get_interface();
+            break;
+        default:
+            log_error("Unsupported architecture: %d", arch);
+            return HAL_ERROR_NOT_SUPPORTED;
+    }
+    
+    // Initialize all subsystems
+    hal_result_t result = HAL_SUCCESS;
+    
+    if (g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->init) {
+        result = g_hal_interface.cpu_ops->init();
+        if (result != HAL_SUCCESS) {
+            log_error("Failed to initialize CPU subsystem: %d", result);
+            return result;
+        }
+    }
+    
+    if (g_hal_interface.memory_ops && g_hal_interface.memory_ops->init) {
+        result = g_hal_interface.memory_ops->init();
+        if (result != HAL_SUCCESS) {
+            log_error("Failed to initialize memory subsystem: %d", result);
+            return result;
+        }
+    }
+    
+    if (g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->init) {
+        result = g_hal_interface.interrupt_ops->init();
+        if (result != HAL_SUCCESS) {
+            log_error("Failed to initialize interrupt subsystem: %d", result);
+            return result;
+        }
+    }
+    
+    if (g_hal_interface.timer_ops && g_hal_interface.timer_ops->init) {
+        result = g_hal_interface.timer_ops->init();
+        if (result != HAL_SUCCESS) {
+            log_error("Failed to initialize timer subsystem: %d", result);
+            return result;
+        }
+    }
+    
+    if (g_hal_interface.platform_ops && g_hal_interface.platform_ops->init) {
+        result = g_hal_interface.platform_ops->init();
+        if (result != HAL_SUCCESS) {
+            log_error("Failed to initialize platform subsystem: %d", result);
+            return result;
+        }
+    }
+    
+    // Get global information
+    if (g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->get_info) {
+        g_hal_interface.cpu_ops->get_info(&g_hal_interface.cpu_info);
+    }
+    
+    if (g_hal_interface.memory_ops && g_hal_interface.memory_ops->get_info) {
+        g_hal_interface.memory_ops->get_info(&g_hal_interface.memory_info);
+    }
+    
+    if (g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->get_info) {
+        g_hal_interface.interrupt_ops->get_info(&g_hal_interface.interrupt_info);
+    }
+    
+    if (g_hal_interface.timer_ops && g_hal_interface.timer_ops->get_info) {
+        g_hal_interface.timer_ops->get_info(&g_hal_interface.timer_info);
+    }
+    
+    if (g_hal_interface.platform_ops && g_hal_interface.platform_ops->get_info) {
+        g_hal_interface.platform_ops->get_info(&g_hal_interface.platform_info);
+    }
+    
+    g_hal_initialized = true;
+    
+    log_info("HAL system initialized successfully");
+    log_info("Architecture: %s (%d-bit)", g_hal_interface.arch_name, g_hal_interface.arch_bits);
+    log_info("CPU: %s %s", g_hal_interface.cpu_info.vendor, g_hal_interface.cpu_info.cpu_model);
+    log_info("Platform: %s", g_hal_interface.platform_info.platform_name);
+    
+    return HAL_SUCCESS;
+}
+
+// Shutdown HAL system
+hal_result_t hal_shutdown(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("Shutting down HAL system");
+    
+    hal_result_t result = HAL_SUCCESS;
+    
+    // Shutdown all subsystems in reverse order
+    if (g_hal_interface.platform_ops && g_hal_interface.platform_ops->shutdown) {
+        result = g_hal_interface.platform_ops->shutdown();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to shutdown platform subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.timer_ops && g_hal_interface.timer_ops->shutdown) {
+        result = g_hal_interface.timer_ops->shutdown();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to shutdown timer subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->shutdown) {
+        result = g_hal_interface.interrupt_ops->shutdown();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to shutdown interrupt subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.memory_ops && g_hal_interface.memory_ops->shutdown) {
+        result = g_hal_interface.memory_ops->shutdown();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to shutdown memory subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->shutdown) {
+        result = g_hal_interface.cpu_ops->shutdown();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to shutdown CPU subsystem: %d", result);
+        }
+    }
+    
+    g_hal_initialized = false;
+    
+    log_info("HAL system shutdown complete");
+    return HAL_SUCCESS;
+}
+
+// Reset HAL system
+hal_result_t hal_reset(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("Resetting HAL system");
+    
+    hal_result_t result = HAL_SUCCESS;
+    
+    // Reset all subsystems
+    if (g_hal_interface.platform_ops && g_hal_interface.platform_ops->reset) {
+        result = g_hal_interface.platform_ops->reset();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to reset platform subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.timer_ops && g_hal_interface.timer_ops->reset) {
+        result = g_hal_interface.timer_ops->reset();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to reset timer subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->reset) {
+        result = g_hal_interface.interrupt_ops->reset();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to reset interrupt subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.memory_ops && g_hal_interface.memory_ops->reset) {
+        result = g_hal_interface.memory_ops->reset();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to reset memory subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->reset) {
+        result = g_hal_interface.cpu_ops->reset();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to reset CPU subsystem: %d", result);
+        }
+    }
+    
+    log_info("HAL system reset complete");
+    return HAL_SUCCESS;
+}
+
+// Cleanup HAL system
+hal_result_t hal_cleanup(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("Cleaning up HAL system");
+    
+    hal_result_t result = HAL_SUCCESS;
+    
+    // Cleanup all subsystems
+    if (g_hal_interface.platform_ops && g_hal_interface.platform_ops->cleanup) {
+        result = g_hal_interface.platform_ops->cleanup();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to cleanup platform subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.timer_ops && g_hal_interface.timer_ops->cleanup) {
+        result = g_hal_interface.timer_ops->cleanup();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to cleanup timer subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.interrupt_ops && g_hal_interface.interrupt_ops->cleanup) {
+        result = g_hal_interface.interrupt_ops->cleanup();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to cleanup interrupt subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.memory_ops && g_hal_interface.memory_ops->cleanup) {
+        result = g_hal_interface.memory_ops->cleanup();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to cleanup memory subsystem: %d", result);
+        }
+    }
+    
+    if (g_hal_interface.cpu_ops && g_hal_interface.cpu_ops->cleanup) {
+        result = g_hal_interface.cpu_ops->cleanup();
+        if (result != HAL_SUCCESS) {
+            log_warn("Failed to cleanup CPU subsystem: %d", result);
+        }
+    }
+    
+    g_hal_initialized = false;
+    
+    log_info("HAL system cleanup complete");
+    return HAL_SUCCESS;
+}
+
+// =============================================================================
+// Interface Access Functions
+// =============================================================================
+
+// Get HAL interface
+hal_interface_t* hal_get_interface(void) {
+    if (!g_hal_initialized) {
+        return NULL;
+    }
+    
+    return &g_hal_interface;
+}
+
+// Set HAL interface
+hal_result_t hal_set_interface(const hal_interface_t* interface) {
+    if (!interface) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    g_hal_interface = *interface;
+    g_hal_initialized = true;
+    
+    log_info("HAL interface set successfully");
+    return HAL_SUCCESS;
+}
+
+// =============================================================================
+// Architecture Detection
+// =============================================================================
+
+// Get current architecture
+hal_architecture_t hal_get_current_architecture(void) {
+    // For now, assume x86_64
+    // In a real implementation, this would detect the actual architecture
+    return HAL_ARCH_X86_64;
+}
+
+// Get architecture name
+const char* hal_get_architecture_name(hal_architecture_t arch) {
+    switch (arch) {
+        case HAL_ARCH_X86_64: return "x86_64";
+        case HAL_ARCH_I386: return "i386";
+        case HAL_ARCH_ARM64: return "arm64";
+        case HAL_ARCH_RISCV64: return "riscv64";
+        default: return "unknown";
+    }
+}
+
+// Get architecture bits
+hal_u32_t hal_get_architecture_bits(hal_architecture_t arch) {
+    switch (arch) {
+        case HAL_ARCH_X86_64: return 64;
+        case HAL_ARCH_I386: return 32;
+        case HAL_ARCH_ARM64: return 64;
+        case HAL_ARCH_RISCV64: return 64;
+        default: return 0;
+    }
+}
+
+// =============================================================================
+// Error Handling
+// =============================================================================
+
+// Get error string
+const char* hal_get_error_string(hal_result_t error) {
+    switch (error) {
+        case HAL_SUCCESS: return "Success";
+        case HAL_ERROR_INVALID_PARAM: return "Invalid parameter";
+        case HAL_ERROR_NOT_SUPPORTED: return "Not supported";
+        case HAL_ERROR_OUT_OF_MEMORY: return "Out of memory";
+        case HAL_ERROR_HARDWARE: return "Hardware error";
+        case HAL_ERROR_TIMEOUT: return "Timeout";
+        case HAL_ERROR_INVALID_STATE: return "Invalid state";
+        default: return "Unknown error";
+    }
+}
+
+// Set error handler
+hal_result_t hal_set_error_handler(hal_result_t (*handler)(hal_result_t error, const char* message)) {
+    g_error_handler = handler;
+    return HAL_SUCCESS;
+}
+
+// =============================================================================
+// Configuration Management
+// =============================================================================
+
+// Set configuration
+hal_result_t hal_set_config(const hal_config_t* config) {
+    if (!config) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    g_hal_config = *config;
+    
+    log_info("HAL configuration updated");
+    return HAL_SUCCESS;
+}
+
+// Get configuration
+hal_result_t hal_get_config(hal_config_t* config) {
+    if (!config) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    *config = g_hal_config;
+    return HAL_SUCCESS;
+}
+
+// Validate configuration
+hal_result_t hal_validate_config(const hal_config_t* config) {
+    if (!config) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    // Validate configuration parameters
+    if (config->max_interrupt_nesting == 0 || config->max_interrupt_nesting > 32) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (config->max_memory_pools == 0 || config->max_memory_pools > 64) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    if (config->min_block_size == 0 || config->min_block_size > config->max_block_size) {
+        return HAL_ERROR_INVALID_PARAM;
+    }
+    
+    return HAL_SUCCESS;
+}
+
+// =============================================================================
+// Utility Functions
+// =============================================================================
+
+// Dump platform information
+hal_result_t hal_dump_platform_info(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("=== HAL Platform Information ===");
+    log_info("Architecture: %s (%d-bit)", g_hal_interface.arch_name, g_hal_interface.arch_bits);
+    log_info("Platform: %s", g_hal_interface.platform_info.platform_name);
+    log_info("Manufacturer: %s", g_hal_interface.platform_info.manufacturer);
+    log_info("Product: %s", g_hal_interface.platform_info.product_name);
+    log_info("Version: %s", g_hal_interface.platform_info.version);
+    log_info("Virtualized: %s", g_hal_interface.platform_info.is_virtualized ? "Yes" : "No");
+    log_info("Debug: %s", g_hal_interface.platform_info.is_debug ? "Yes" : "No");
+    
+    return HAL_SUCCESS;
+}
+
+// Dump CPU information
+hal_result_t hal_dump_cpu_info(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("=== HAL CPU Information ===");
+    log_info("Vendor: %s", g_hal_interface.cpu_info.vendor);
+    log_info("Model: %s", g_hal_interface.cpu_info.cpu_model);
+    log_info("Family: %d", g_hal_interface.cpu_info.family);
+    log_info("Model Number: %d", g_hal_interface.cpu_info.cpu_model_num);
+    log_info("Stepping: %s", g_hal_interface.cpu_info.cpu_stepping);
+    log_info("Frequency: %d MHz", g_hal_interface.cpu_info.frequency);
+    log_info("Features: 0x%016llx", (unsigned long long)g_hal_interface.cpu_info.features);
+    
+    return HAL_SUCCESS;
+}
+
+// Dump memory information
+hal_result_t hal_dump_memory_info(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("=== HAL Memory Information ===");
+    log_info("Heap: %p - %llu bytes", 
+             g_hal_interface.memory_info.heap_base, 
+             (unsigned long long)g_hal_interface.memory_info.heap_size);
+    log_info("Kernel: %p - %p", 
+             g_hal_interface.memory_info.kernel_base, 
+             g_hal_interface.memory_info.kernel_end);
+    log_info("User: %p - %p", 
+             g_hal_interface.memory_info.user_base, 
+             g_hal_interface.memory_info.user_end);
+    log_info("Direct Map: %p - %p", 
+             g_hal_interface.memory_info.direct_map_base, 
+             g_hal_interface.memory_info.direct_map_end);
+    log_info("Page Size: %d bytes", g_hal_interface.memory_info.page_size);
+    log_info("Total Pages: %u", g_hal_interface.memory_info.total_pages);
+    log_info("Free Pages: %u", g_hal_interface.memory_info.free_pages);
+    log_info("Used Pages: %u", g_hal_interface.memory_info.used_pages);
+    
+    return HAL_SUCCESS;
+}
+
+// Dump interrupt information
+hal_result_t hal_dump_interrupt_info(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("=== HAL Interrupt Information ===");
+    log_info("Total Vectors: %u", g_hal_interface.interrupt_info.total_vectors);
+    log_info("Enabled Vectors: %u", g_hal_interface.interrupt_info.enabled_vectors);
+    log_info("Max Priority: %u", g_hal_interface.interrupt_info.max_priority);
+    log_info("Nesting Level: %u", g_hal_interface.interrupt_info.nesting_level);
+    log_info("Total Interrupts: %llu", (unsigned long long)g_hal_interface.interrupt_info.total_interrupts);
+    log_info("Failed Interrupts: %llu", (unsigned long long)g_hal_interface.interrupt_info.failed_interrupts);
+    log_info("Nested Interrupts: %llu", (unsigned long long)g_hal_interface.interrupt_info.nested_interrupts);
+    
+    return HAL_SUCCESS;
+}
+
+// Dump timer information
+hal_result_t hal_dump_timer_info(void) {
+    if (!g_hal_initialized) {
+        return HAL_ERROR_INVALID_STATE;
+    }
+    
+    log_info("=== HAL Timer Information ===");
+    log_info("Type: %d", g_hal_interface.timer_info.type);
+    log_info("Frequency: %d Hz", g_hal_interface.timer_info.frequency);
+    log_info("Tick Count: %llu", (unsigned long long)g_hal_interface.timer_info.tick_count);
+    log_info("Cycle Count: %llu", (unsigned long long)g_hal_interface.timer_info.cycle_count);
+    log_info("Resolution: %u", g_hal_interface.timer_info.resolution);
+    log_info("High Resolution: %s", g_hal_interface.timer_info.is_high_resolution ? "Yes" : "No");
+    
+    return HAL_SUCCESS;
+}
