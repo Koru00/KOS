@@ -28,7 +28,9 @@ typedef enum {
     HAL_ERROR_OUT_OF_MEMORY = -3,
     HAL_ERROR_HARDWARE = -4,
     HAL_ERROR_TIMEOUT = -5,
-    HAL_ERROR_INVALID_STATE = -6
+    HAL_ERROR_INVALID_STATE = -6,
+    HAL_ERROR_NOT_INITIALIZED = -7,
+    HAL_ERROR_ALREADY_INITIALIZED = -8
 } hal_result_t;
 
 // Boolean type

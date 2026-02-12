@@ -12,16 +12,12 @@
 
 void printf(const char *str, ...)
 {
-
     va_list args;
     va_start(args, str);
 
-    for (size_t i = 0; 1; i++)
+    for (size_t i = 0; str[i] != '\0'; i++)
     {
-
         char character = (uint8_t)str[i];
-
-        char sp[3];
 
         switch (character)
         {
@@ -35,6 +31,7 @@ void printf(const char *str, ...)
             tab();
             break;
         case '%':
+        {
             char type = (uint8_t)str[++i];
             switch (type)
             {
@@ -42,22 +39,64 @@ void printf(const char *str, ...)
                 vga_write('%');
                 break;
             case 'c':
+            {
                 char c = (char)(va_arg(args, int));
                 vga_write(c);
                 break;
+            }
             case 's':
+            {
                 char *s = va_arg(args, char *);
-                printf(s);
+                if (s) {
+                    // Write string directly to avoid recursion
+                    for (char *p = s; *p; p++) {
+                        vga_write(*p);
+                    }
+                }
                 break;
+            }
             case 'd':
+            {
                 int d = va_arg(args, int);
-                printf(int_to_str(d));
+                char *num_str = int_to_str(d);
+                for (char *p = num_str; *p; p++) {
+                    vga_write(*p);
+                }
                 break;
+            }
             case 'x':
+            {
                 unsigned int num = va_arg(args, unsigned int);
-                printf(hex_to_str(num));
+                // Simple hex conversion
+                char hex_str[20];
+                char *ptr = hex_str + 19;
+                *ptr = '\0';
+                ptr--;
+                
+                if (num == 0) {
+                    *ptr = '0';
+                    vga_write('0');
+                } else {
+                    while (num > 0) {
+                        int digit = num % 16;
+                        *ptr = (digit < 10) ? ('0' + digit) : ('A' + digit - 10);
+                        num /= 16;
+                        ptr--;
+                    }
+                    ptr++;
+                    while (*ptr) {
+                        vga_write(*ptr++);
+                    }
+                }
+                break;
+            }
+            default:
+                vga_write('%');
+                vga_write(type);
+                break;
             }
             break;
+        }
         default:
             vga_write(character);
             break;
@@ -79,8 +118,11 @@ void scanf(char *output)
     {
         scan[i] = vga_read(i, 0);
     }
-    output = malloc(scan);
-    return output;
+    // Fix: copy the string instead of trying to malloc with char*
+    for (int i = 0; i < length && scan[i] != '\0'; i++) {
+        output[i] = scan[i];
+    }
+    output[length] = '\0'; // Null terminate
 }
 
 // DEPRECATED

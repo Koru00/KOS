@@ -10,9 +10,8 @@ extern irq_handler
 
 %macro IRQ_STUB 1
 irq%1_stub:
-    ;cli
     push 0          ; Dummy error code (not all IRQs have one)
-    push %1         ; IRQ number
+    push %1         ; IRQ number (32 + IRQ number)
     jmp irq_common_stub
 %endmacro
 
@@ -35,46 +34,52 @@ IRQ_STUB 15
 
 ; Common IRQ handler logic
 irq_common_stub:
-    ; Save general-purpose registers (System V AMD64 ABI)
-    push r15
-    push r14
-    push r13
-    push r12
-    push r11
-    push r10
-    push r9
-    push r8
-    push rdi
-    push rsi
-    push rbp
-    push rdx
-    push rcx
-    push rbx
+    ; Save general-purpose registers in the order expected by cpu_status_s
     push rax
+    push rbx
+    push rcx
+    push rdx
+    push rbp
+    push rsi
+    push rdi
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
 
-    ; Set up first function argument for irq_handler (pointer to "registers_t")
+    ; Save RSP, RBP, and other state for iretq frame
+    mov rax, rsp
+    push rax        ; Save current RSP
+    
+    ; Set up first function argument for irq_handler (pointer to cpu_status_s)
     mov rdi, rsp
     call irq_handler
-    mov rsp, rax
+    
+    ; Restore RSP from saved value
+    pop rsp
+
+    ; Restore registers in reverse order
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rdi
+    pop rsi
+    pop rbp
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
 
     ; Remove pushed irq number and dummy error code
     add rsp, 16
-
-    ; Restore registers
-    pop rax
-    pop rbx
-    pop rcx
-    pop rdx
-    pop rbp
-    pop rsi
-    pop rdi
-    pop r8
-    pop r9
-    pop r10
-    pop r11
-    pop r12
-    pop r13
-    pop r14
-    pop r15
 
     iretq

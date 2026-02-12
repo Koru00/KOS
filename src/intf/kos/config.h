@@ -31,6 +31,19 @@
 #define KOS_MAX_KEYBOARD_LISTENERS 10
 #define KOS_MAX_FILENAME_LENGTH 256
 
+// Process management configuration
+#define KOS_CONFIG_MAX_PROCESSES           256
+#define KOS_CONFIG_MAX_FILE_DESCRIPTORS     64
+#define KOS_CONFIG_MAX_SIGNALS              32
+#define KOS_CONFIG_DEFAULT_STACK_SIZE       (64 * 1024)  // 64KB
+#define KOS_CONFIG_MIN_STACK_SIZE           (8 * 1024)   // 8KB
+#define KOS_CONFIG_MAX_STACK_SIZE           (1024 * 1024) // 1MB
+
+// Driver framework string lengths
+#define KOS_CONFIG_MAX_NAME_LENGTH          64
+#define KOS_CONFIG_MAX_DESC_LENGTH          256
+#define KOS_CONFIG_MAX_VERSION_LENGTH       32
+
 // Debug Configuration
 #define KOS_DEBUG_ENABLED      1
 #define KOS_LOG_LEVEL_DEBUG    0

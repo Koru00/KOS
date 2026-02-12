@@ -16,8 +16,8 @@ struct Char
     uint8_t color;
 };
 
-// Pointer to the VGA space on memory
-struct Char *buffer = (struct Char *)0xb8000;
+// Pointer to the VGA space on memory (volatile for hardware access)
+volatile struct Char *buffer = (volatile struct Char *)0xb8000;
 
 // Curent col and row (they are unsigned)
 size_t col = 0;

@@ -132,20 +132,19 @@ void add_keyboard_listener(key_pressed_fn a_listener)
     if (index_listener >= MAX_LISTENER)
     {
         log_message(__PRETTY_FUNCTION__, "listeners are more then 10", LOG_ERROR);
-        return 1;
+        return;
     }
     _listener[index_listener++] = a_listener;
-    return 0;
 }
+
 void add_keyboard_release_listener(key_realesed_fn a_listener)
 {
     if (index_listener_realese >= MAX_LISTENER)
     {
         log_message(__PRETTY_FUNCTION__, "listeners are more then 10", LOG_ERROR);
-        return 1;
+        return;
     }
     _listener_realese[index_listener_realese++] = a_listener;
-    return 0;
 }
 
 void keyboard_callback()
@@ -155,35 +154,52 @@ void keyboard_callback()
     uint8_t scancode = port_byte_in(0x60);
     is_release = scancode & 0x80;
 
-    keycode_t key_released = scancode_map[scancode & 0x7F];
+    // Bounds checking for scancode
+    uint8_t scancode_index = scancode & 0x7F;
+    if (scancode_index >= 128) {
+        return; // Invalid scancode, ignore
+    }
+
+    keycode_t key_released = scancode_map[scancode_index];
 
     handle_scancode(scancode, is_release);
 }
 
 void handle_scancode(uint8_t sc, int is_release)
 {
-    keycode_t key;
+    keycode_t key = KEY_UNKNOWN; // Default to unknown
 
     if (sc == 0xE0)
     {
         extended = 1;
         return;
     }
+    
+    uint8_t sc_index = sc & 0x7F;
+    
     if (is_release)
     {
-        sc = sc & 0x7F;
+        sc_index = sc & 0x7F;
     }
+    
     if (extended)
     {
-        key = extended_scancode_map[sc];
+        // Bounds checking for extended scancodes
+        if (sc_index < 94) {
+            key = extended_scancode_map[sc_index];
+        }
         extended = 0;
     }
     else
     {
-        key = scancode_map[sc];
+        // Bounds checking for regular scancodes
+        if (sc_index < 128) {
+            key = scancode_map[sc_index];
+        }
     }
 
-    if (_listener != NULL && !is_release)
+    // Notify press listeners
+    if (!is_release)
     {
         for (int i = 0; i < index_listener; i++)
         {
@@ -193,7 +209,8 @@ void handle_scancode(uint8_t sc, int is_release)
             }
         }
     }
-    else if (_listener_realese != NULL && is_release)
+    // Notify release listeners
+    else 
     {
         for (int i = 0; i < index_listener_realese; i++)
         {

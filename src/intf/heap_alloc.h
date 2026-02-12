@@ -1,5 +1,8 @@
 #pragma once
+#include <stddef.h>
 
 void* malloc(size_t size);
-
-void free_all();
+void free(void* ptr);
+void* realloc(void* ptr, size_t size);
+void init_heap(void);
+void free_all(void);

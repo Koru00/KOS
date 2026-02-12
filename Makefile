@@ -57,6 +57,10 @@ ISR_HAL_SOURCES := $(shell find src/impl/kos/interrupts -name "isr_hal.c")
 MEMORY_HAL_SOURCES := $(shell find src/impl/kos/memory -name "memory_hal.c")
 KOS_BRIDGE_SOURCES := $(shell find src/impl/kos/utils -name "kos_hal_bridge.c")
 KOS_ENTRY_SOURCES := $(shell find src/impl/kos -name "kernel_entry.c")
+DRIVER_FRAMEWORK_SOURCES := $(shell find src/impl/kos/drivers -name "driver_*.c")
+VGA_DRIVER_SOURCES := $(shell find src/impl/kos/drivers -name "vga_driver_simple.c")
+PROCESS_SOURCES := $(shell find src/impl/kos/process -name "*.c")
+SYSTEM_SOURCES := $(shell find src/impl/kos/system -name "startup_display_final.c")
 
 # Include directories for C files
 c_include_dirs := $(shell find src/intf -type d)
@@ -71,7 +75,11 @@ ISR_HAL_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(ISR_HAL_SOURCES)
 MEMORY_HAL_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(MEMORY_HAL_SOURCES))
 KOS_BRIDGE_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(KOS_BRIDGE_SOURCES))
 KOS_ENTRY_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(KOS_ENTRY_SOURCES))
-OBJECTS       := $(C_OBJECTS) $(ASM_OBJECTS) $(HAL_OBJECTS) $(HAL_CLEAN_OBJECTS) $(ISR_HAL_OBJECTS) $(MEMORY_HAL_OBJECTS) $(KOS_BRIDGE_OBJECTS) $(KOS_ENTRY_OBJECTS)
+DRIVER_FRAMEWORK_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(DRIVER_FRAMEWORK_SOURCES))
+VGA_DRIVER_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(VGA_DRIVER_SOURCES))
+PROCESS_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(PROCESS_SOURCES))
+SYSTEM_OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SYSTEM_SOURCES))
+OBJECTS       := $(C_OBJECTS) $(ASM_OBJECTS) $(HAL_OBJECTS) $(HAL_CLEAN_OBJECTS) $(ISR_HAL_OBJECTS) $(MEMORY_HAL_OBJECTS) $(KOS_BRIDGE_OBJECTS) $(KOS_ENTRY_OBJECTS) $(DRIVER_FRAMEWORK_OBJECTS) $(VGA_DRIVER_OBJECTS) $(PROCESS_OBJECTS) $(SYSTEM_OBJECTS)
 
 # Dependency files
 DEPS          := $(C_OBJECTS:.o=.d)

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "driver.h"
+#include "hal/hal_core.h"
 #include "../types.h"
+#include "../process/process.h"
 
 // =============================================================================
 // KOS - VGA Display Driver Interface
@@ -27,6 +28,23 @@ typedef enum {
     KOS_VGA_COLOR_WHITE = 15
 } kos_vga_color_t;
 
+// VGA IOCTL commands
+#define KOS_VGA_IOCTL_SET_COLOR     0x4600
+#define KOS_VGA_IOCTL_GET_COLOR     0x4601
+#define KOS_VGA_IOCTL_CLEAR_SCREEN  0x4602
+#define KOS_VGA_IOCTL_SET_CURSOR    0x4603
+#define KOS_VGA_IOCTL_GET_CURSOR    0x4604
+
+// VGA status structure
+typedef struct {
+    uint32_t cursor_x;
+    uint32_t cursor_y;
+    uint8_t current_color;
+    uint32_t width;
+    uint32_t height;
+    hal_bool_t initialized;
+} kos_vga_status_t;
+
 // VGA character structure
 typedef struct kos_vga_char {
     u8 character;
@@ -34,7 +52,7 @@ typedef struct kos_vga_char {
 } kos_vga_char_t;
 
 // VGA screen dimensions
-#define KOS_VGA_WIDTH  80
+#define KOS_VGA_WIDTH 80
 #define KOS_VGA_HEIGHT 25
 #define KOS_VGA_SIZE   (KOS_VGA_WIDTH * KOS_VGA_HEIGHT)
 
@@ -46,6 +64,26 @@ typedef struct kos_vga_private {
     u8 default_color;
     b8 cursor_enabled;
 } kos_vga_private_t;
+
+// =============================================================================
+// VGA Driver API (HAL-based)
+// =============================================================================
+
+// Initialize VGA driver
+hal_result_t vga_init(void);
+
+// Write string to VGA display
+hal_result_t vga_write_string(const char* str);
+
+// Set VGA text color
+hal_result_t vga_set_color(kos_vga_color_t fg, kos_vga_color_t bg);
+
+// Clear VGA screen
+hal_result_t vga_clear(void);
+
+// =============================================================================
+// Legacy VGA Driver Functions
+// =============================================================================
 
 // VGA driver functions
 kos_result_t kos_vga_init(kos_driver_t* driver);
@@ -78,5 +116,10 @@ void kos_vga_newline(kos_driver_t* driver);
 void kos_vga_tab(kos_driver_t* driver);
 void kos_vga_backspace(kos_driver_t* driver);
 
-// Driver instance declaration
-extern kos_driver_t g_vga_driver;
+// =============================================================================
+// VGA Utility Macros
+// =============================================================================
+
+#define VGA_MAKE_COLOR(fg, bg) ((fg) | ((bg) << 4))
+#define VGA_PRINT(str) vga_write_string(str)
+#define VGA_PRINTLN(str) do { vga_write_string(str); vga_write_string("\n"); } while(0)
