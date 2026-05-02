@@ -97,7 +97,7 @@ clean:
 
 run:
 ifeq ($(ARCH),x86_64)
-	qemu-system-x86_64 -kernel $(BUILD_DIR)/$(KERNEL)
+	qemu-system-x86_64 -cdrom build/os.iso
 else ifeq ($(ARCH),aarch64)
 	qemu-system-aarch64 -M virt -cpu cortex-a57 -kernel $(BUILD_DIR)/$(KERNEL)
 endif

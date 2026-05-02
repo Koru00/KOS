@@ -1,4 +1,4 @@
-.section .data
+.section .data.boot
 .align 4096
 .global pml4_table
 .global pdpt_identity

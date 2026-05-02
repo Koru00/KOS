@@ -46,6 +46,9 @@ _start:
     test $0x20000000, %edx
     jz .no_long_mode
 
+    lgdt (gdt_descriptor)
+   
+
     /* -------------------------
        Enable PAE
     -------------------------- */
@@ -86,7 +89,7 @@ _start:
     hlt
     jmp .hang
 
-.section .bss
+.section .text.boot
 .align 4
 multiboot_info_ptr:
     .long 0

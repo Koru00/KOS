@@ -1,9 +1,10 @@
 /* arch/x86_64/boot/long_mode.S */
 
-.section .text
+.section .text.boot
 .code64
 .global long_mode_entry
 .extern kernel_main
+.extern stack_top
 
 long_mode_entry:
     /* Reload segments (flat) */
