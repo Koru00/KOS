@@ -1,5 +1,6 @@
 // kernel/main.c
 
+extern void idt_init();
 extern char stack_top;
 
 void kernel_main(void) {
@@ -7,6 +8,8 @@ void kernel_main(void) {
     // - You are in long mode
     // - Paging is active
     // - Stack is valid
+
+    idt_init();
 
     volatile char *video = (volatile char*)0xB8000;
     video[0] = 'O';

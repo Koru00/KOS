@@ -7,9 +7,13 @@
 .global pd_higher
 
 pml4_table:
-    .quad pdpt_identity + 0x3
-    .fill 510, 8, 0
-    .quad pdpt_higher + 0x3
+    .quad pdpt_identity + 0x3     # index 0
+
+    .fill 255, 8, 0               # entries 1–255
+
+    .quad pdpt_higher + 0x3       # index 256
+
+    .fill 255, 8, 0               # entries 257–511
 
 .align 4096
 pdpt_identity:
@@ -29,4 +33,7 @@ pdpt_higher:
 .align 4096
 pd_higher:
     .quad 0x00000000 + 0x83
-    .fill 511, 8, 0
+    .quad 0x00200000 + 0x83
+    .quad 0x00400000 + 0x83
+    .quad 0x00600000 + 0x83
+    .fill 508, 8, 0

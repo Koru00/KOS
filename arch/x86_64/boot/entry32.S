@@ -70,12 +70,21 @@ _start:
     or $0x100, %eax
     wrmsr
 
+   mov $'P', %al
+out %al, $0xE9
+
     /* -------------------------
        Enable paging
     -------------------------- */
     mov %cr0, %eax
     or $0x80000001, %eax
     mov %eax, %cr0
+
+mov $'E', %al
+out %al, $0xE9
+
+mov $'J', %al
+out %al, $0xE9
 
     /* -------------------------
        FAR JUMP to long mode entry
