@@ -1,26 +1,20 @@
 /* arch/x86_64/boot/long_mode.S */
 
-.section .text.boot
-.code64
-.global long_mode_entry
+.intel_syntax noprefix
+.global long_mode_start
 .extern kernel_main
-.extern stack_top
+	
+.section .text
+.code64
 
-long_mode_entry:
-    mov $'L', %al
-    out %al, $0xE9
-    /* Reload segments (flat) */
-    mov $0x10, %ax
-    mov %ax, %ds
-    mov %ax, %ss
-    mov %ax, %es
+long_mode_start:
+	mov ax, 0
+	mov ss, ax
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	
+	call kernel_main
 
-    /* Setup stack (64-bit) */
-    mov $stack_top, %rsp
-
-    /* Call kernel */
-    call kernel_main
-
-.hang:
     hlt
-    jmp .hang

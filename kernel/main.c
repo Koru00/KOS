@@ -1,7 +1,6 @@
 // kernel/main.c
 
-extern void idt_init();
-extern char stack_top;
+//extern void idt_init();
 
 void kernel_main(void) {
     // At this point:
@@ -9,14 +8,7 @@ void kernel_main(void) {
     // - Paging is active
     // - Stack is valid
 
-    idt_init();
-
-    volatile char *video = (volatile char*)0xB8000;
-    video[0] = 'O';
-    video[1] = 0x07;
-    
-    __asm__ volatile ("mov $'P', %al");
-    __asm__ volatile ("out %al, $0xE9");
+    //idt_init();
 
     while (1) {
         __asm__ volatile ("hlt");
