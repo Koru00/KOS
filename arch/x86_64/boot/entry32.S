@@ -31,7 +31,7 @@ _start:
     pushf
     pop %eax
     xor %ecx, %eax
-    jz .no_cpuid
+    //jz .no_cpuid
 
     /* -------------------------
        Long mode support check
@@ -47,7 +47,6 @@ _start:
     jz .no_long_mode
 
     lgdt (gdt_descriptor)
-   
 
     /* -------------------------
        Enable PAE
@@ -56,42 +55,31 @@ _start:
     or $0x20, %eax
     mov %eax, %cr4
 
-    /* -------------------------
-       Load page tables (identity address!)
-    -------------------------- */
-    mov $pml4_table, %eax
+    /* Load page tables - Use physical address! */
+    /* Subtracting the virtual offset ensures EAX gets the physical 1MB+ address */
+    mov $(pml4_table - 0xffffffff80000000), %eax
     mov %eax, %cr3
 
     /* -------------------------
-       Enable long mode (EFER)
+       Enable long mode (EFER.LME) MUST HAPPEN FIRST
     -------------------------- */
     mov $0xC0000080, %ecx
     rdmsr
     or $0x100, %eax
     wrmsr
 
-   mov $'P', %al
-out %al, $0xE9
-
     /* -------------------------
-       Enable paging
+       Enable paging (CR0.PG) MUST HAPPEN LAST
     -------------------------- */
     mov %cr0, %eax
     or $0x80000001, %eax
     mov %eax, %cr0
 
-mov $'E', %al
-out %al, $0xE9
-
-mov $'J', %al
-out %al, $0xE9
-
     /* -------------------------
-       FAR JUMP to long mode entry
-       (THIS IS REQUIRED — not a normal jmp)
+      FAR JUMP to long mode entry
     -------------------------- */
     ljmp $0x08, $long_mode_entry
-
+   
 .no_cpuid:
 .no_long_mode:
 .hang:

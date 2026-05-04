@@ -7,7 +7,7 @@
 .extern stack_top
 
 long_mode_entry:
-mov $'L', %al
+    mov $'L', %al
     out %al, $0xE9
     /* Reload segments (flat) */
     mov $0x10, %ax

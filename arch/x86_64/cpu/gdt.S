@@ -12,5 +12,5 @@ gdt_end:
 
 .global gdt_descriptor
 gdt_descriptor:
-    .short gdt_end - gdt_start - 1    # Limit
-    .long gdt_start                   # Base
+    .short gdt_end - gdt_start - 1
+    .quad gdt_start                   # Use .quad for a full 64-bit address

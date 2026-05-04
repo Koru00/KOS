@@ -14,6 +14,9 @@ void kernel_main(void) {
     volatile char *video = (volatile char*)0xB8000;
     video[0] = 'O';
     video[1] = 0x07;
+    
+    __asm__ volatile ("mov $'P', %al");
+    __asm__ volatile ("out %al, $0xE9");
 
     while (1) {
         __asm__ volatile ("hlt");
