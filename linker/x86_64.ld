@@ -3,55 +3,53 @@ ENTRY(start)
 
 PHDRS
 {
-    /* Define a single loadable segment for GRUB */
-    boot PT_LOAD FLAGS(7); /* Read, Write, Execute */
+    boot PT_LOAD FLAGS(5);   /* R + X */
+    kernel PT_LOAD FLAGS(7); /* R + W + X */
 }
 
 SECTIONS
 {
-    /* 1. Physical address starts at 1MB */
-    . = 1M;
+    /* --- BOOT SECTION FIRST --- */
+    . = 0;
 
-    _boot_start = .;
-
-    /* 2. Boot section: VMA == LMA (Low memory) */
-    .boot : {
+    .boot 0x100000 : AT(0)
+    {
         KEEP(*(.multiboot_header))
-        *(.boot.text)
-        *(.boot.rodata)
-    } : boot
-
-    . = ALIGN(4K);
-    _boot_end = .;
-
+        KEEP(*(.boot*))
+    } :boot
+    
     /* 3. Physical aliases for 32-bit assembly */
     p_page_table_l4 = page_table_l4 - 0xffffffff80000000;
     p_page_table_l3 = page_table_l3 - 0xffffffff80000000;
     p_page_table_l2 = page_table_l2 - 0xffffffff80000000;
-    p_stack_top     = stack_top     - 0xffffffff80000000;
+    p_stack_top = stack_top - 0xffffffff80000000;
     p_gdt64_pointer = gdt64_pointer - 0xffffffff80000000;
     p_long_mode_ptr = long_mode_start - 0xffffffff80000000;
 
-    /* 4. Move Virtual Address to High-Half, but keep Physical Address at ~1MB */
+    /* --- KERNEL HIGH HALF --- */
     . = ALIGN(4K);
     . += 0xffffffff80000000;
 
     .text : AT(ADDR(.text) - 0xffffffff80000000) {
         *(.text*)
-    } : boot
+    } : kernel
 
     .rodata : AT(ADDR(.rodata) - 0xffffffff80000000) {
         *(.rodata*)
-    } : boot
+    } : kernel
 
     .data : AT(ADDR(.data) - 0xffffffff80000000) {
         *(.data*)
-    } : boot
+    } : kernel
 
     .bss : AT(ADDR(.bss) - 0xffffffff80000000) {
         *(COMMON)
         *(.bss*)
-    } : boot
+    } : kernel
 
-    _kernel_end = .;
+    /DISCARD/ : {
+        *(.comment)
+        *(.note*)
+        *(.eh_frame*)
+    }
 }
