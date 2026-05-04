@@ -123,12 +123,7 @@ void kernel_main()
     init_input();
     kb_print(1);
     
-    init_output();
-
-  printf("Hello");
-  char* line[100];
-  scanf(line);
-  printf("\n%s", line);
+    init_output();  
 
     while (1)
     {

@@ -1,5 +1,5 @@
-	global long_mode_start
-    extern kernel_main
+global long_mode_start
+extern kernel_main
 	
 	section .text
 	bits 64

@@ -155,7 +155,9 @@ void keyboard_callback()
     uint8_t scancode = port_byte_in(0x60);
     is_release = scancode & 0x80;
 
-    keycode_t key_released = scancode_map[scancode & 0x7F];
+    log_message(__PRETTY_FUNCTION__, scancode, LOG_DEBUG);
+
+    keycode_t key_released = scancode_map[scancode & 0x7F]; 
 
     handle_scancode(scancode);
 }

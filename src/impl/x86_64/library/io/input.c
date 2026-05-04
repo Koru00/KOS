@@ -170,7 +170,10 @@ keycode_t key;
 
 int input_kbd_listener(const keycode_t Key)
 {
-    key = Key;
+    if (Key == KEY_A)
+    {
+        printf("IT IS F7!\n");
+    }
     caps_lock(Key);
     shift(Key);
     char c = keycode_to_ascii(Key);
@@ -180,7 +183,6 @@ int input_kbd_listener(const keycode_t Key)
         return;
     }
     vga_write(c);
-  key == NULL;
 }
 
 void kb_print(int state)
