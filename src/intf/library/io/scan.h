@@ -1,2 +1,0 @@
-
-void scanf(char *output);
