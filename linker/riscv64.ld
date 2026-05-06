@@ -3,23 +3,31 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x80200000;  /* QEMU default load address */
+    . = 0x80000000;  /* QEMU default load address */
 
     .text : {
-        *(.text*)
+        KEEP(*(.text.boot)) /* Ensure boot.s is FIRST */
+        *(.text .text.*)
     }
-
+    
     .rodata : {
         *(.rodata*)
     }
 
     .data : {
-        *(.data*)
+    	. = ALIGN(16);
+    	__global_pointer$ = . + 0x800;
+   	*(.sdata .sdata.*)
+    	*(.data .data.*)
     }
 
     .bss : {
-        *(.bss*)
-        *(COMMON)
+    	. = ALIGN(16);
+    	_bss_start = .;
+    	*(.sbss .sbss.*)
+    	*(.bss .bss.*)
+    	*(COMMON)
+    	_bss_end = .;
     }
 
     . = ALIGN(16);

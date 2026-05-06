@@ -1,0 +1,1 @@
+make ARCH=riscv64
