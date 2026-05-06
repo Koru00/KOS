@@ -33,7 +33,7 @@ else ifeq ($(ARCH),riscv64)
 	CC := riscv64-unknown-elf-gcc
 	LD := riscv64-unknown-elf-ld
 
-	CFLAGS := $(COMMON_FLAGS) -O2 -march=rv64imac -mabi=lp64 -mcmodel=medany	
+	CFLAGS := $(COMMON_FLAGS) -O2 -march=rv64imac_zicsr -mabi=lp64 -mcmodel=medany	
 	DFLAGS := -DUART_OUTPUT 
 	ASFLAGS := $(CFLAGS)
 	LDFLAGS := -nostdlib -T linker/riscv64.ld
