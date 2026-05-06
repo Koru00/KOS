@@ -126,7 +126,7 @@ else ifeq ($(ARCH),aarch64)
 	qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic -kernel $(BUILD_DIR)/$(KERNEL)
 
 else ifeq ($(ARCH),riscv64)
-	qemu-system-riscv64 -machine virt -cpu rv64 -m 128M -nographic   -serial mon:stdio -bios none -kernel $(BUILD_DIR)/$(KERNEL) -d in_asm,cpu -D trace.log
+	qemu-system-riscv64 -machine virt -cpu rv64 -m 128M -nographic -serial mon:stdio -bios none -kernel $(BUILD_DIR)/$(KERNEL) -d in_asm,cpu -D trace.log
 endif
 
 # =========================

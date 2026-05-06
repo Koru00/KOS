@@ -41,7 +41,7 @@ static inline unsigned long read_sstatus(void) {
 pt_regs get_regs(uintptr_t *regs, uintptr_t cause, uintptr_t epc, uintptr_t tval)
 {
 	pt_regs regs_s;
-	regs_s.ra = regs[0];
+	regs_s.ra = regs[1];
 	regs_s.sp = regs[2];
 	regs_s.gp = regs[3];
 	regs_s.tp = regs[4];

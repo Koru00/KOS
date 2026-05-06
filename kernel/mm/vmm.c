@@ -1,4 +1,5 @@
 #include "kernel/mm/mm.h"
+#include <kernel/panic.h>
 
 // Hardware address extraction macros
 #define VA_TO_VPN(va, level) (((va) >> (12 + (level) * 9)) & 0x1FF)
@@ -41,11 +42,11 @@ static pte_t *page_table_walk(pte_t *root, uintptr_t va, int alloc) {
 // Map a specific Virtual Address to a Physical Address
 int map_page(pte_t *root_table, uintptr_t va, uintptr_t pa, int flags) {
     pte_t *pte = page_table_walk(root_table, va, 1);
+ 
     if (!pte) return -1; // Allocation failed
     
     if (*pte & PTE_V) {
         // Panic! We are trying to remap an already mapped page.
-        // In a pro kernel, you might allow overwriting, but for now, fail safe.
         return -2; 
     }
     
@@ -73,7 +74,10 @@ void vmm_init() {
     
     // 2. Map Kernel Code (.text) as Read-Execute ONLY (W^X security)
     size_t text_size = (uintptr_t)_text_end - (uintptr_t)_text_start;
-    map_range(kernel_root_table, (uintptr_t)_text_start, (uintptr_t)_text_start, text_size, PTE_R | PTE_X);
+    if (map_range(kernel_root_table, (uintptr_t)_text_start, (uintptr_t)_text_start, text_size, PTE_R | PTE_X) != 0)
+    {
+	panic("VMM init: failed to map kernel code\n");
+    }
     
     // 3. Map Kernel Data (.data, .bss) as Read-Write ONLY
     size_t data_size = (uintptr_t)_kernel_end - (uintptr_t)_data_start;
