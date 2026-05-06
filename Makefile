@@ -33,7 +33,8 @@ else ifeq ($(ARCH),riscv64)
 	CC := riscv64-unknown-elf-gcc
 	LD := riscv64-unknown-elf-ld
 
-	CFLAGS := $(COMMON_FLAGS) -O2 -march=rv64imac -mabi=lp64
+	CFLAGS := $(COMMON_FLAGS) -O2 -march=rv64imac -mabi=lp64 -mcmodel=medany	
+	DFLAGS := -DUART_OUTPUT 
 	ASFLAGS := $(CFLAGS)
 	LDFLAGS := -nostdlib -T linker/riscv64.ld
 
@@ -92,7 +93,7 @@ $(BUILD_DIR)/$(KERNEL): $(OBJECTS)
 $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	@echo "CC $(ARCH) $<"
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
 
 # ASM (no more fake 32/64 split)
 $(BUILD_DIR)/%.o: %.S
