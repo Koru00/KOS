@@ -4,28 +4,52 @@
 
 ARCH ?= x86_64
 
-CC := gcc
-LD := ld
-
 BUILD_DIR := build/$(ARCH)
 KERNEL := kernel.elf
 
 # =========================
-# FLAGS
+# COMMON FLAGS
 # =========================
 
-COMMON_FLAGS := -ffreestanding -nostdlib -Iinclude -Wall -Wextra
+COMMON_FLAGS := -ffreestanding -nostdlib -Iinclude -Wall -Wextra -MMD -MP
 
-CFLAGS_64 := $(COMMON_FLAGS) -O2 -m64 -MMD -MP
-CFLAGS_32 := $(COMMON_FLAGS) -O2 -m32 -MMD -MP
-
-ASFLAGS_64 := $(COMMON_FLAGS) -m64
-ASFLAGS_32 := $(COMMON_FLAGS) -m64
-
-LDFLAGS := -nostdlib -T linker/$(ARCH).ld
+# =========================
+# ARCH-SPECIFIC CONFIG
+# =========================
 
 ifeq ($(ARCH),x86_64)
-	LDFLAGS += -m elf_x86_64
+
+	CC := gcc
+	LD := ld
+
+	CFLAGS := $(COMMON_FLAGS) -O2 -m64
+	ASFLAGS := -m64
+	LDFLAGS := -nostdlib -T linker/x86_64.ld -m elf_x86_64
+
+# -------------------------
+
+else ifeq ($(ARCH),riscv64)
+
+	CC := riscv64-unknown-elf-gcc
+	LD := riscv64-unknown-elf-ld
+
+	CFLAGS := $(COMMON_FLAGS) -O2 -march=rv64imac -mabi=lp64
+	ASFLAGS := $(CFLAGS)
+	LDFLAGS := -nostdlib -T linker/riscv64.ld
+
+# -------------------------
+
+else ifeq ($(ARCH),aarch64)
+
+	CC := aarch64-none-elf-gcc
+	LD := aarch64-none-elf-ld
+
+	CFLAGS := $(COMMON_FLAGS) -O2 -march=armv8-a
+	ASFLAGS := $(CFLAGS)
+	LDFLAGS := -nostdlib -T linker/aarch64.ld
+
+else
+$(error Unsupported ARCH: $(ARCH))
 endif
 
 # =========================
@@ -64,19 +88,17 @@ $(BUILD_DIR)/$(KERNEL): $(OBJECTS)
 # COMPILATION RULES
 # =========================
 
-# C files are built as 64-bit kernel code
+# C
 $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
-	@echo "CC64 $<"
-	$(CC) $(CFLAGS_64) -c $< -o $@
+	@echo "CC $(ARCH) $<"
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Assembly files: files ending in 32.S are built as 32-bit, everything else as 64-bit
+# ASM (no more fake 32/64 split)
 $(BUILD_DIR)/%.o: %.S
 	@mkdir -p $(dir $@)
-	@case "$<" in \
-		*32.S) echo "AS32 $<"; $(CC) $(ASFLAGS_32) -c $< -o $@ ;; \
-		*)     echo "AS64 $<"; $(CC) $(ASFLAGS_64) -c $< -o $@ ;; \
-	esac
+	@echo "AS $(ARCH) $<"
+	$(CC) $(ASFLAGS) -c $< -o $@
 
 # =========================
 # DEPENDENCIES
@@ -98,8 +120,12 @@ clean:
 run:
 ifeq ($(ARCH),x86_64)
 	qemu-system-x86_64 -cdrom build/os.iso
+
 else ifeq ($(ARCH),aarch64)
-	qemu-system-aarch64 -M virt -cpu cortex-a57 -kernel $(BUILD_DIR)/$(KERNEL)
+	qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic -kernel $(BUILD_DIR)/$(KERNEL)
+
+else ifeq ($(ARCH),riscv64)
+	qemu-system-riscv64 -machine virt -nographic -bios default -kernel $(BUILD_DIR)/$(KERNEL)
 endif
 
 # =========================
@@ -117,6 +143,8 @@ endif
 
 info:
 	@echo "ARCH: $(ARCH)"
+	@echo "CC: $(CC)"
+	@echo "LD: $(LD)"
 	@echo "C sources: $(words $(C_SOURCES))"
 	@echo "ASM sources: $(words $(ASM_SOURCES))"
 	@echo "Objects: $(words $(OBJECTS))"
