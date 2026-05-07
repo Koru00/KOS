@@ -1,5 +1,7 @@
-#include "lib/kprint.h"
-#include "lib/string/string.h"
+/* lib/kprint.c */
+
+#include <lib/string/string.h>
+#include <arch/general/platform.h>
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -9,7 +11,7 @@ void kprint(const char* str)
 {
 	for (int i = 0; str[i] != '\0'; i++)
 	{
-		arch_putchar(str[i]);
+		put_char(str[i]);
 	}
 }
 
@@ -30,27 +32,18 @@ void kprintf(const char* str, ...)
 
         switch (character)
         {
-        /*case '\0':
-            goto end;
-            break;
-        case '\n':
-            arch_putchar('\n');
-            break;
-        case '\t':
-            arch_putchar('\t');
-            break;*/
         case '%':
         {
             char type = (uint8_t)str[++i];
             switch (type)
             {
             case '%':
-                arch_putchar('%');
+                put_char('%');
                 break;
             case 'c':
             {
                 char c = (char)(va_arg(args, int));
-                arch_putchar(c);
+                put_char(c);
                 break;
             }
             case 's':
@@ -59,7 +52,7 @@ void kprintf(const char* str, ...)
                 if (s) {
                     // Write string directly to avoid recursion
                     for (char *p = s; *p; p++) {
-                        arch_putchar(*p);
+                        put_char(*p);
                     }
                 }
                 break;
@@ -67,9 +60,14 @@ void kprintf(const char* str, ...)
             case 'd':
             {
                 int d = va_arg(args, int);
-               	char* num_str = itoa(d);
+		if (d == 0)
+		{
+			put_char('0');
+			break;
+		}
+		char* num_str = itoa(d);
                 for (char *p = num_str; *p; p++) {
-                    arch_putchar(*p);
+                    put_char(*p);
                 }
                 break;
             }
@@ -84,7 +82,7 @@ void kprintf(const char* str, ...)
 
                 if (num == 0) {
                     *ptr = '0';
-                    arch_putchar('0');
+                    put_char('0');
                 } else {
                     while (num > 0) {
                         int digit = num % 16;
@@ -94,24 +92,23 @@ void kprintf(const char* str, ...)
                     }
                     ptr++;
                     while (*ptr) {
-                        arch_putchar(*ptr++);
+                        put_char(*ptr++);
                     }
                 }
                 break;
             }
             default:
-                arch_putchar('%');
-                arch_putchar(type);
+                put_char('%');
+                put_char(type);
                 break;
             }
             break;
         }
         default:
-            arch_putchar(character);
+            put_char(character);
             break;
         }
     }
 
-/*end:
-    va_end(args);*/
+    va_end(args);
 }

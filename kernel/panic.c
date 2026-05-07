@@ -1,6 +1,6 @@
 #include <lib/kprint.h>
 
-
+__attribute__((noreturn))
 void panic(const char* reason)
 {
 	// Stamp with time from start up
