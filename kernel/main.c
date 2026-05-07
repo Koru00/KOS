@@ -1,16 +1,20 @@
 /* kernel/main.c */
 
-#include "lib/kprint.h"
-#include "kernel/mm/mm.h"
+#include <lib/kprint.h>
+#include <kernel/mm/mm.h>
+#include <lib/memset.h>
 
 #define DRAM_END 0x88000000
 
 void kernel_init(void);
 
 void kernel_main(void) {
-
+	kprintf("Booting Kernel...\n");
 	kprintf("- kernel init:\n");
+	
 	kernel_init();
+
+	kprintf("Kernel Started!\n");
 
 	while (1);
 }

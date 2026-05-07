@@ -1,4 +1,5 @@
-#include "lib/math/math.h"
+#include <lib/math/math.h>
+#include <kernel/mm/mm.h>
 
 int strlen(const char* str)
 {
@@ -30,7 +31,7 @@ char* itoa(int num)
 
 	// Allocate the size of the number + '\0'
 	// TODO: Use dinamyc allocation
-	char* str = "";
+	char* str = pmm_alloc();
 
 	for (int i = 0; num != 0; i++)
 	{

@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <lib/memset.h>
+
 typedef struct page {
     struct page *next;
 } page_t;
@@ -30,8 +32,7 @@ void *pmm_alloc() {
     
     // Clear the page before returning (security/stability)
     
-    // TODO Implement memset
-    // memset(p, 0, 4096);
+    memset(p, 0, 4096);
     return (void*)p;
 }
 
